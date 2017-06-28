@@ -11,11 +11,23 @@ public class Modification {
   private String revision;
 
   @SerializedName("email_address")
-  public String emailAddress;
+  private String emailAddress;
 
   @SerializedName("user_name")
-  public String userName;
+  private String userName;
 
   @SerializedName("comment")
-  public String comment;
+  private String comment;
+
+  public String getModifiedTime() {
+    return modifiedTime;
+  }
+
+  @Override
+  public String toString() {
+    return "Modification{" +
+      "modifiedTime='" + modifiedTime + '\'' +
+      ", revision='" + revision + '\'' +
+      '}';
+  }
 }

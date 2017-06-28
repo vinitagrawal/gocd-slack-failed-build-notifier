@@ -10,6 +10,8 @@ import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.go.plugin.api.request.GoPluginApiRequest;
 import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
 import me.vinitagrawal.gocd.slack.model.GoApiRequestBody;
+import me.vinitagrawal.gocd.slack.model.MaterialRevision;
+import me.vinitagrawal.gocd.slack.utils.PipelineUtilities;
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
@@ -105,6 +107,7 @@ public class GoNotificationPlugin implements GoPlugin {
 
     if (hasStageFailed(goApiRequestBody)) {
       LOGGER.info(goApiRequestBody.getPipeline().getName() + " is failing.");
+      determineFailingMaterialRevision(goApiRequestBody.getPipeline().getRevisions());
     }
 
     Map<String, Object> response = new HashMap<String, Object>();
@@ -113,6 +116,11 @@ public class GoNotificationPlugin implements GoPlugin {
     LOGGER.info("\n\nResponse : " + goPluginApiResponse.responseBody());
 
     return goPluginApiResponse;
+  }
+
+  private void determineFailingMaterialRevision(List<MaterialRevision> materialRevisionList) {
+    MaterialRevision materialRevision = PipelineUtilities.getBuildCauseRevision(materialRevisionList);
+    LOGGER.info("Failing Material Revision : " + materialRevision.toString());
   }
 
   private boolean hasStageFailed(GoApiRequestBody goApiRequestBody) {

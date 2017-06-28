@@ -37,5 +37,9 @@ public class GoApiRequestBody {
     public String getName() {
       return name;
     }
+
+    public List<MaterialRevision> getRevisions() {
+      return revisions;
+    }
   }
 }
