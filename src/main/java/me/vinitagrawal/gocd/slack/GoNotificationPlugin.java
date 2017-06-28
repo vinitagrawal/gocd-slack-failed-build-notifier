@@ -2,6 +2,7 @@ package me.vinitagrawal.gocd.slack;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
 import com.thoughtworks.go.plugin.api.GoApplicationAccessor;
 import com.thoughtworks.go.plugin.api.GoPlugin;
 import com.thoughtworks.go.plugin.api.GoPluginIdentifier;
@@ -68,7 +69,7 @@ public class GoNotificationPlugin implements GoPlugin {
 
   private GoPluginApiResponse handleGetPluginSettingsConfiguration() {
     Map<String, Object> response = new HashMap<String, Object>();
-    response.put("server_base_url", createField("Server Base URL", null, false, false, "0"));
+    response.put("server_base_url", createField("Server Base URL", null, true, false, "0"));
     response.put("server_api_username", createField("Server API Username", null, false, false, "0"));
     response.put("server_api_password", createField("Server API Password", null, false, true, "0"));
     return renderJSON(SUCCESS_RESPONSE_CODE, response);
@@ -87,10 +88,21 @@ public class GoNotificationPlugin implements GoPlugin {
   }
 
   private GoPluginApiResponse handleValidatePluginSettingsConfiguration(GoPluginApiRequest goPluginApiRequest) {
-    Map<String, Object> responseMap = gson.fromJson(goPluginApiRequest.requestBody(), Map.class);
-    LOGGER.info("\n\nPlugin Settings : " + responseMap + "\n\n");
-    List<Map<String, Object>> response = new ArrayList<Map<String, Object>>();
-    return renderJSON(SUCCESS_RESPONSE_CODE, response);
+    Map<String, Object> requestMap = gson.fromJson(goPluginApiRequest.requestBody(), Map.class);
+    Map<String, String> configuration = keyValuePairs(requestMap, "plugin-settings");
+    String server_base_url = configuration.get("server_base_url");
+    LOGGER.info("\n\nPlugin Settings : " + requestMap + "\n\n");
+
+    if(isNullOrEmpty(server_base_url)) {
+      List<Map<String, Object>> response = new ArrayList<Map<String, Object>>();
+      Map<String, Object> responseMap = new HashMap<>();
+      responseMap.put("key", "server_base_url");
+      responseMap.put("message", "Enter Server URL");
+      response.add(responseMap);
+      return renderJSON(SUCCESS_RESPONSE_CODE, response);
+    }
+
+    return renderJSON(SUCCESS_RESPONSE_CODE, new JsonArray());
   }
 
   private GoPluginApiResponse handleNotificationsInterestedIn() {
@@ -128,6 +140,10 @@ public class GoNotificationPlugin implements GoPlugin {
     return result.equals("Failed");
   }
 
+  private boolean isNullOrEmpty(String value) {
+    return value == null || "".equals(value.trim());
+  }
+
   private Map<String, Object> createField(String displayName, String defaultValue, boolean isRequired, boolean isSecure, String displayOrder) {
     Map<String, Object> fieldProperties = new HashMap<String, Object>();
     fieldProperties.put("display-name", displayName);
@@ -136,6 +152,17 @@ public class GoNotificationPlugin implements GoPlugin {
     fieldProperties.put("secure", isSecure);
     fieldProperties.put("display-order", displayOrder);
     return fieldProperties;
+  }
+
+  private Map<String, String> keyValuePairs(Map<String, Object> map, String mainKey) {
+    Map<String, String> keyValuePairs = new HashMap<String, String>();
+    Map<String, Object> fieldsMap = (Map<String, Object>) map.get(mainKey);
+    for (String field : fieldsMap.keySet()) {
+      Map<String, Object> fieldProperties = (Map<String, Object>) fieldsMap.get(field);
+      String value = (String) fieldProperties.get("value");
+      keyValuePairs.put(field, value);
+    }
+    return keyValuePairs;
   }
 
   private GoPluginApiResponse renderJSON(final int responseCode, Object response) {

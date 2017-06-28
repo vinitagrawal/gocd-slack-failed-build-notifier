@@ -31,10 +31,11 @@ public class GoNotificationPluginTest {
     request = mock(GoPluginApiRequest.class);
   }
 
-  private GoPluginApiResponse handlePluginRequest(String requestType) {
+  private GoPluginApiResponse handlePluginRequest(String requestType, String fileName) {
     when(request.requestName()).thenReturn(requestType);
     try {
-      when(request.requestBody()).thenReturn(FileUtilities.readFrom("go_api_request_body.json"));
+      if(fileName != null)
+        when(request.requestBody()).thenReturn(FileUtilities.readFrom(fileName));
     } catch (IOException e) {
       e.printStackTrace();
     }
@@ -52,7 +53,7 @@ public class GoNotificationPluginTest {
 
   @Test
   public void shouldHandleNotificationInterestedInRequest() {
-    GoPluginApiResponse apiResponse = handlePluginRequest(REQUEST_NOTIFICATIONS_INTERESTED_IN);
+    GoPluginApiResponse apiResponse = handlePluginRequest(REQUEST_NOTIFICATIONS_INTERESTED_IN, null);
 
     assertThat(apiResponse, is(notNullValue()));
     assertThat(apiResponse.responseCode(), equalTo(200));
@@ -62,7 +63,7 @@ public class GoNotificationPluginTest {
 
   @Test
   public void shouldHandleStageStatusAndReturnSuccess() throws Exception {
-    GoPluginApiResponse apiResponse = handlePluginRequest(REQUEST_STAGE_STATUS);
+    GoPluginApiResponse apiResponse = handlePluginRequest(REQUEST_STAGE_STATUS, "go_api_request_body.json");
 
     assertThat(apiResponse, is(notNullValue()));
     assertThat(apiResponse.responseBody(), equalTo("{\"status\":\"success\"}"));
@@ -70,7 +71,7 @@ public class GoNotificationPluginTest {
 
   @Test
   public void shouldGetPluginSettingsViewWhenRequested() {
-    GoPluginApiResponse apiResponse = handlePluginRequest(PLUGIN_SETTINGS_GET_VIEW);
+    GoPluginApiResponse apiResponse = handlePluginRequest(PLUGIN_SETTINGS_GET_VIEW, null);
 
     assertThat(apiResponse, is(notNullValue()));
     assertThat(apiResponse.responseBody(), containsString("div class"));
@@ -78,7 +79,7 @@ public class GoNotificationPluginTest {
 
   @Test
   public void shouldGetConfigurationForPluginSettings() {
-    GoPluginApiResponse apiResponse = handlePluginRequest(PLUGIN_SETTINGS_GET_CONFIGURATION);
+    GoPluginApiResponse apiResponse = handlePluginRequest(PLUGIN_SETTINGS_GET_CONFIGURATION, null);
 
     assertThat(apiResponse, is(notNullValue()));
     Map<String, Object> responseMap = new Gson().fromJson(apiResponse.responseBody(), Map.class);
@@ -89,15 +90,24 @@ public class GoNotificationPluginTest {
 
   @Test
   public void shouldValidatePluginConfiguration() throws Exception {
-    GoPluginApiResponse apiResponse = handlePluginRequest(PLUGIN_SETTINGS_VALIDATE_CONFIGURATION);
+    GoPluginApiResponse apiResponse = handlePluginRequest(PLUGIN_SETTINGS_VALIDATE_CONFIGURATION, "validate_plugin_configuration.json");
 
     assertThat(apiResponse, is(notNullValue()));
     assertThat(apiResponse.responseCode(), equalTo(200));
   }
 
   @Test
+  public void shouldValidateServerBaseURLFromPluginConfiguration() throws Exception {
+    GoPluginApiResponse apiResponse = handlePluginRequest(PLUGIN_SETTINGS_VALIDATE_CONFIGURATION, "validate_plugin_configuration_empty_server_url.json");
+
+    assertThat(apiResponse, is(notNullValue()));
+    assertThat(apiResponse.responseCode(), equalTo(200));
+    assertThat(apiResponse.responseBody(), containsString("Enter Server URL"));
+  }
+
+  @Test
   public void shouldReturnNullWhenRequestIsInvalid() {
-    GoPluginApiResponse apiResponse = handlePluginRequest("Invalid");
+    GoPluginApiResponse apiResponse = handlePluginRequest("Invalid", null);
 
     assertThat(apiResponse, equalTo(null));
   }
