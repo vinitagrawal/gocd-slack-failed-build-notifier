@@ -1,0 +1,15 @@
+<div class="form_item_block">
+    <label>Server Base URL:</label>
+    <input type="text" ng-model="server_base_url" ng-required="true" placeholder="http://"/>
+    <span class="form_error" ng-show="GOINPUTNAME[server_base_url].$error.server">{{ GOINPUTNAME[server_base_url].$error.server }}</span>
+</div>
+<div class="form_item_block">
+    <label>Server API Username:</label>
+    <input type="text" ng-model="server_api_username" ng-required="false"/>
+    <span class="form_error" ng-show="GOINPUTNAME[server_api_username].$error.server">{{ GOINPUTNAME[server_api_username].$error.server }}</span>
+</div>
+<div class="form_item_block">
+    <label>Server API Password:</label>
+    <input type="password" ng-model="server_api_password" ng-required="false"/>
+    <span class="form_error" ng-show="GOINPUTNAME[server_api_password].$error.server">{{ GOINPUTNAME[server_api_password].$error.server }}</span>
+</div>

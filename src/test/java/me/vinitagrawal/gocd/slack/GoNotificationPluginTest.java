@@ -1,5 +1,6 @@
 package me.vinitagrawal.gocd.slack;
 
+import com.google.gson.Gson;
 import com.thoughtworks.go.plugin.api.GoPluginIdentifier;
 import com.thoughtworks.go.plugin.api.request.GoPluginApiRequest;
 import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
@@ -9,11 +10,12 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Map;
 
-import static me.vinitagrawal.gocd.slack.GoNotificationPlugin.REQUEST_NOTIFICATIONS_INTERESTED_IN;
-import static me.vinitagrawal.gocd.slack.GoNotificationPlugin.REQUEST_STAGE_STATUS;
+import static me.vinitagrawal.gocd.slack.GoNotificationPlugin.*;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -64,6 +66,33 @@ public class GoNotificationPluginTest {
 
     assertThat(apiResponse, is(notNullValue()));
     assertThat(apiResponse.responseBody(), equalTo("{\"status\":\"success\"}"));
+  }
+
+  @Test
+  public void shouldGetPluginSettingsViewWhenRequested() {
+    GoPluginApiResponse apiResponse = handlePluginRequest(PLUGIN_SETTINGS_GET_VIEW);
+
+    assertThat(apiResponse, is(notNullValue()));
+    assertThat(apiResponse.responseBody(), containsString("div class"));
+  }
+
+  @Test
+  public void shouldGetConfigurationForPluginSettings() {
+    GoPluginApiResponse apiResponse = handlePluginRequest(PLUGIN_SETTINGS_GET_CONFIGURATION);
+
+    assertThat(apiResponse, is(notNullValue()));
+    Map<String, Object> responseMap = new Gson().fromJson(apiResponse.responseBody(), Map.class);
+    assertTrue(responseMap.containsKey("server_base_url"));
+    assertTrue(responseMap.containsKey("server_api_password"));
+    assertTrue(responseMap.containsKey("server_api_username"));
+  }
+
+  @Test
+  public void shouldValidatePluginConfiguration() throws Exception {
+    GoPluginApiResponse apiResponse = handlePluginRequest(PLUGIN_SETTINGS_VALIDATE_CONFIGURATION);
+
+    assertThat(apiResponse, is(notNullValue()));
+    assertThat(apiResponse.responseCode(), equalTo(200));
   }
 
   @Test
