@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<go-plugin id="slack-failed-build.notifier" version="1">
+    <about>
+        <name>Slack Failed Build Notification plugin</name>
+        <version>0.1</version>
+        <target-go-version>15.1.0</target-go-version>
+        <description>Plugin to identify the commit that caused the pipeline to go red and notify the respective person
+        </description>
+        <vendor>
+            <name>Vinit Agrawal</name>
+            <url>https://github.com/vinitagrawal/gocd-slack-failed-build-notifier</url>
+        </vendor>
+    </about>
+</go-plugin>
