@@ -12,13 +12,13 @@ import com.thoughtworks.go.plugin.api.request.DefaultGoApiRequest;
 import com.thoughtworks.go.plugin.api.request.GoPluginApiRequest;
 import com.thoughtworks.go.plugin.api.response.GoApiResponse;
 import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
-import me.vinitagrawal.gocd.slack.model.GoApiRequestBody;
-import me.vinitagrawal.gocd.slack.model.MaterialRevision;
-import me.vinitagrawal.gocd.slack.model.PluginSettings;
-import me.vinitagrawal.gocd.slack.utils.PipelineUtilities;
+import me.vinitagrawal.gocd.slack.model.*;
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.*;
 
 import static java.util.Arrays.asList;
@@ -123,8 +123,14 @@ public class GoNotificationPlugin implements GoPlugin {
     GoApiRequestBody goApiRequestBody = gson.fromJson(goPluginApiRequest.requestBody(), GoApiRequestBody.class);
 
     if (hasStageFailed(goApiRequestBody)) {
-      LOGGER.info(goApiRequestBody.getPipeline().getName() + " is failing.");
-      determineFailingMaterialRevision(goApiRequestBody.getPipeline().getRevisions(), getPluginSettings());
+      GoApiRequestBody.Pipeline pipeline = goApiRequestBody.getPipeline();
+      LOGGER.info(pipeline.getName() + " is failing.");
+      determineFailingCommit(
+        pipeline.getName(),
+        pipeline.getCounter(),
+        pipeline.getRevisions(),
+        getPluginSettings()
+      );
     }
 
     Map<String, Object> response = new HashMap<String, Object>();
@@ -135,9 +141,42 @@ public class GoNotificationPlugin implements GoPlugin {
     return goPluginApiResponse;
   }
 
-  private void determineFailingMaterialRevision(List<MaterialRevision> materialRevisionList, PluginSettings pluginSettings) {
-    MaterialRevision materialRevision = PipelineUtilities.getBuildCauseRevision(materialRevisionList);
-    LOGGER.info("Failing Material Revision : " + materialRevision.toString());
+  private void determineFailingCommit(String pipelineName, int pipelineCounter,
+                                      List<MaterialRevision> materialRevisionList,
+                                      PluginSettings pluginSettings) {
+    MaterialRevision materialRevision = getBuildCauseRevision(materialRevisionList);
+
+    if (materialRevision.isBuildCauseTypePipeline()) {
+      String revision = getPipelineRevision(materialRevision);
+      LOGGER.info("Pipeline Revision: " + revision);
+
+      String[] pipelineRevision = revision.split("/");
+      pipelineName = pipelineRevision[0];
+      pipelineCounter = Integer.parseInt(pipelineRevision[1]);
+      PipelineInstance pipelineInstance = getPipelineInstance(pluginSettings, pipelineName, pipelineCounter);
+
+      LOGGER.info("PipelineInstance : " + new Gson().toJson(pipelineInstance));
+      determineFailingCommit(
+        pipelineName,
+        pipelineCounter,
+        pipelineInstance.getBuildCause().getRevisions(),
+        pluginSettings
+      );
+    }
+  }
+
+  private PipelineInstance getPipelineInstance(PluginSettings pluginSettings, String name, int counter) {
+    try {
+      String url = pluginSettings.getServerBaseUrl() + "/go/api/pipelines/" +
+        name + "/instance/" + counter;
+      LOGGER.info(" \nConnecting to : " + url);
+      URLConnection connection = new URL(url).openConnection();
+
+      return gson.fromJson(new InputStreamReader(connection.getInputStream()), PipelineInstance.class);
+    } catch (IOException e) {
+      e.printStackTrace();
+      throw new RuntimeException(e);
+    }
   }
 
   public PluginSettings getPluginSettings() {
@@ -155,6 +194,20 @@ public class GoNotificationPlugin implements GoPlugin {
 
     LOGGER.info("getPluginSettings: " + response.responseBody());
     return gson.fromJson(response.responseBody(), PluginSettings.class);
+  }
+
+  private MaterialRevision getBuildCauseRevision(List<MaterialRevision> revisions) {
+    for(MaterialRevision materialRevision : revisions) {
+      if(materialRevision.isChanged())
+        return materialRevision;
+    }
+
+    return null;
+  }
+
+  private String getPipelineRevision(MaterialRevision materialRevision) {
+    Modification modification = materialRevision.getBuildCauseModification();
+    return modification.getRevision();
   }
 
   private boolean hasStageFailed(GoApiRequestBody goApiRequestBody) {

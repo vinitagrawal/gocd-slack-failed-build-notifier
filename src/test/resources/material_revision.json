@@ -1,0 +1,27 @@
+{
+  "material": {
+    "pipeline-configuration": {
+      "pipeline-name": "mocks",
+      "stage-name": "MockServer"
+    },
+    "type": "pipeline"
+  },
+  "changed": true,
+  "modifications": [
+    {
+      "revision": "mocks/2/MockServer/1",
+      "modified-time": "2017-06-20T11:50:30.619Z",
+      "data": {}
+    },
+    {
+      "revision": "mocks/2/MockServer/3",
+      "modified-time": "2017-06-20T16:50:30.619Z",
+      "data": {}
+    },
+    {
+      "revision": "kernel/1/MockServer/2",
+      "modified-time": "2017-06-20T14:50:30.619Z",
+      "data": {}
+    }
+  ]
+}

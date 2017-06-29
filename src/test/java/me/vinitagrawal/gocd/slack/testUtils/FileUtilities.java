@@ -1,4 +1,4 @@
-package me.vinitagrawal.gocd.slack.utils;
+package me.vinitagrawal.gocd.slack.testUtils;
 
 import org.apache.commons.io.FileUtils;
 

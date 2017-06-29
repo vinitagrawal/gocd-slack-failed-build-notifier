@@ -8,12 +8,20 @@ import com.thoughtworks.go.plugin.api.request.GoPluginApiRequest;
 import com.thoughtworks.go.plugin.api.response.GoApiResponse;
 import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
 import me.vinitagrawal.gocd.slack.model.PluginSettings;
-import me.vinitagrawal.gocd.slack.utils.FileUtilities;
+import me.vinitagrawal.gocd.slack.testUtils.FileUtilities;
+import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Matchers;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.Arrays;
 import java.util.Map;
 
@@ -24,6 +32,8 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(GoNotificationPlugin.class)
 public class GoNotificationPluginTest {
 
   private static final String INTERESTED_NOTIFICATION_RESPONSE = "{\"notifications\":[\"stage-status\"]}";
@@ -77,10 +87,23 @@ public class GoNotificationPluginTest {
   @Test
   public void shouldHandleStageStatusAndReturnSuccess() throws Exception {
     setupPluginSettings();
+    setupURLConnection();
+
     GoPluginApiResponse apiResponse = handlePluginRequest(REQUEST_STAGE_STATUS, "go_api_request_body.json");
 
     assertThat(apiResponse, is(notNullValue()));
     assertThat(apiResponse.responseBody(), equalTo("{\"status\":\"success\"}"));
+  }
+
+  private void setupURLConnection() throws Exception {
+    URL url = PowerMockito.mock(URL.class);
+    URLConnection connection = mock(URLConnection.class);
+    String pipelineInstance = FileUtilities.readFrom("pipeline_instance.json");
+    InputStream inputStream = IOUtils.toInputStream(pipelineInstance);
+
+    PowerMockito.whenNew(URL.class).withAnyArguments().thenReturn(url);
+    when(url.openConnection()).thenReturn(connection);
+    when(connection.getInputStream()).thenReturn(inputStream);
   }
 
   @Test
@@ -103,7 +126,7 @@ public class GoNotificationPluginTest {
   }
 
   @Test
-  public void shouldValidatePluginConfiguration() throws Exception {
+  public void shouldValidatePluginConfiguration() {
     GoPluginApiResponse apiResponse = handlePluginRequest(PLUGIN_SETTINGS_VALIDATE_CONFIGURATION, "validate_plugin_configuration.json");
 
     assertThat(apiResponse, is(notNullValue()));
@@ -111,7 +134,7 @@ public class GoNotificationPluginTest {
   }
 
   @Test
-  public void shouldValidateServerBaseURLFromPluginConfiguration() throws Exception {
+  public void shouldValidateServerBaseURLFromPluginConfiguration() {
     GoPluginApiResponse apiResponse = handlePluginRequest(PLUGIN_SETTINGS_VALIDATE_CONFIGURATION, "validate_plugin_configuration_empty_server_url.json");
 
     assertThat(apiResponse, is(notNullValue()));

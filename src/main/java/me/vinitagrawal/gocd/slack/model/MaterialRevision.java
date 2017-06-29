@@ -16,35 +16,59 @@ public class MaterialRevision {
   @SerializedName("material")
   private Map material;
 
-  public List<Modification> getModifications() {
+  @SerializedName("changed")
+  private boolean changed;
+
+  private List<Modification> getModifications() {
     return modifications;
   }
 
+  public Map getMaterial() {
+    return material;
+  }
+
+  public boolean isChanged() {
+    return changed;
+  }
+
+  public boolean isBuildCauseTypePipeline() {
+    String materialType = getMaterial().get("type").toString();
+    return materialType.equalsIgnoreCase("pipeline");
+  }
+
+  public Modification getBuildCauseModification() {
+    Modification modification = getModifications().get(0);
+    for (int i=1; i<getModifications().size(); i++) {
+      modification = getRecentModification(modification, getModifications().get(i));
+    }
+    return modification;
+  }
+
   public Date getLatestModifiedTime() {
-    Date recentDateTime = convertStringToDate(getModifications().get(0).getModifiedTime());
+    String recentTime = getModifications().get(0).getModifiedTime();
     for(int i=1; i<modifications.size(); i++) {
-      Date modifiedDateTime = convertStringToDate(modifications.get(i).getModifiedTime());
-      recentDateTime = getRecentTime(recentDateTime, modifiedDateTime);
+      recentTime = getRecentTime(recentTime, modifications.get(i).getModifiedTime());
     }
 
-    return recentDateTime;
+    return convertStringToDate(recentTime);
   }
 
-  private Date getRecentTime(Date recentDateTime, Date modifiedDateTime) {
+  private Modification getRecentModification(Modification recentModification, Modification modification) {
+    String recentTime = getRecentTime(recentModification.getModifiedTime(), modification.getModifiedTime());
+    if (modification.getModifiedTime().equals(recentTime))
+      return modification;
 
-    if (modifiedDateTime != null && recentDateTime != null &&
-      modifiedDateTime.after(recentDateTime)) {
-      return modifiedDateTime;
-    }
-
-    return recentDateTime;
+    return recentModification;
   }
 
-  @Override
-  public String toString() {
-    return "MaterialRevision{" +
-      "modifications=" + modifications +
-      ", material=" + material +
-      '}';
+  private String getRecentTime(String recentTime, String modifiedTime) {
+    Date latestDate = convertStringToDate(recentTime);
+    Date date = convertStringToDate(modifiedTime);
+
+    if (date != null && latestDate != null && date.after(latestDate))
+      return modifiedTime;
+
+    return recentTime;
   }
+
 }

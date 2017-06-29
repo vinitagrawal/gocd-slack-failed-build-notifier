@@ -23,11 +23,7 @@ public class Modification {
     return modifiedTime;
   }
 
-  @Override
-  public String toString() {
-    return "Modification{" +
-      "modifiedTime='" + modifiedTime + '\'' +
-      ", revision='" + revision + '\'' +
-      '}';
+  public String getRevision() {
+    return revision;
   }
 }

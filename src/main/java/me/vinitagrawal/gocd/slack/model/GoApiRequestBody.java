@@ -41,5 +41,9 @@ public class GoApiRequestBody {
     public List<MaterialRevision> getRevisions() {
       return revisions;
     }
+
+    public int getCounter() {
+      return counter;
+    }
   }
 }
