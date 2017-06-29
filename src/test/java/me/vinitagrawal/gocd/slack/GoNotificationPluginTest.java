@@ -1,12 +1,17 @@
 package me.vinitagrawal.gocd.slack;
 
 import com.google.gson.Gson;
+import com.thoughtworks.go.plugin.api.GoApplicationAccessor;
 import com.thoughtworks.go.plugin.api.GoPluginIdentifier;
+import com.thoughtworks.go.plugin.api.request.GoApiRequest;
 import com.thoughtworks.go.plugin.api.request.GoPluginApiRequest;
+import com.thoughtworks.go.plugin.api.response.GoApiResponse;
 import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
+import me.vinitagrawal.gocd.slack.model.PluginSettings;
 import me.vinitagrawal.gocd.slack.utils.FileUtilities;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Matchers;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -24,6 +29,7 @@ public class GoNotificationPluginTest {
   private static final String INTERESTED_NOTIFICATION_RESPONSE = "{\"notifications\":[\"stage-status\"]}";
   private GoNotificationPlugin plugin;
   private GoPluginApiRequest request;
+  private GoApplicationAccessor accessor;
 
   @Before
   public void setUp() throws Exception {
@@ -41,6 +47,13 @@ public class GoNotificationPluginTest {
     }
 
     return plugin.handle(request);
+  }
+
+  private void setupPluginSettings() {
+    accessor = mock(GoApplicationAccessor.class);
+    when(accessor.submit(Matchers.any(GoApiRequest.class))).thenReturn(getGoApiResponseForPlugin());
+
+    plugin.initializeGoApplicationAccessor(accessor);
   }
 
   @Test
@@ -63,6 +76,7 @@ public class GoNotificationPluginTest {
 
   @Test
   public void shouldHandleStageStatusAndReturnSuccess() throws Exception {
+    setupPluginSettings();
     GoPluginApiResponse apiResponse = handlePluginRequest(REQUEST_STAGE_STATUS, "go_api_request_body.json");
 
     assertThat(apiResponse, is(notNullValue()));
@@ -112,4 +126,30 @@ public class GoNotificationPluginTest {
     assertThat(apiResponse, equalTo(null));
   }
 
+  @Test
+  public void shouldGetPluginSettings() throws Exception {
+    setupPluginSettings();
+
+    PluginSettings pluginSettings = plugin.getPluginSettings();
+    assertThat(pluginSettings.getServerBaseUrl(), equalTo("http://localhost:8153"));
+  }
+
+  private GoApiResponse getGoApiResponseForPlugin() {
+    return new GoApiResponse() {
+      @Override
+      public int responseCode() {
+        return 200;
+      }
+
+      @Override
+      public Map<String, String> responseHeaders() {
+        return null;
+      }
+
+      @Override
+      public String responseBody() {
+        return "{\"server_base_url\":\"http://localhost:8153\",\"server_api_password\":\"\",\"server_api_username\":\"\"}";
+      }
+    };
+  }
 }

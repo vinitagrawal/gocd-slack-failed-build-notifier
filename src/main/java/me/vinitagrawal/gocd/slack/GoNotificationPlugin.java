@@ -8,10 +8,13 @@ import com.thoughtworks.go.plugin.api.GoPlugin;
 import com.thoughtworks.go.plugin.api.GoPluginIdentifier;
 import com.thoughtworks.go.plugin.api.annotation.Extension;
 import com.thoughtworks.go.plugin.api.logging.Logger;
+import com.thoughtworks.go.plugin.api.request.DefaultGoApiRequest;
 import com.thoughtworks.go.plugin.api.request.GoPluginApiRequest;
+import com.thoughtworks.go.plugin.api.response.GoApiResponse;
 import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
 import me.vinitagrawal.gocd.slack.model.GoApiRequestBody;
 import me.vinitagrawal.gocd.slack.model.MaterialRevision;
+import me.vinitagrawal.gocd.slack.model.PluginSettings;
 import me.vinitagrawal.gocd.slack.utils.PipelineUtilities;
 import org.apache.commons.io.IOUtils;
 
@@ -28,6 +31,7 @@ public class GoNotificationPlugin implements GoPlugin {
   private static final String EXTENSION_TYPE = "notification";
 
   private static final List<String> goSupportedVersions = asList("1.0");
+  public static final String GET_PLUGIN_SETTINGS_API = "go.processor.plugin-settings.get";
   public static final String PLUGIN_SETTINGS_GET_CONFIGURATION = "go.plugin-settings.get-configuration";
   public static final String PLUGIN_SETTINGS_GET_VIEW = "go.plugin-settings.get-view";
   public static final String PLUGIN_SETTINGS_VALIDATE_CONFIGURATION = "go.plugin-settings.validate-configuration";
@@ -38,10 +42,11 @@ public class GoNotificationPlugin implements GoPlugin {
   private static final int INTERNAL_ERROR_RESPONSE_CODE = 500;
 
   private Gson gson = new Gson();
+  private GoApplicationAccessor accessor;
 
   @Override
   public void initializeGoApplicationAccessor(GoApplicationAccessor goApplicationAccessor) {
-
+    accessor = goApplicationAccessor;
   }
 
   @Override
@@ -119,7 +124,7 @@ public class GoNotificationPlugin implements GoPlugin {
 
     if (hasStageFailed(goApiRequestBody)) {
       LOGGER.info(goApiRequestBody.getPipeline().getName() + " is failing.");
-      determineFailingMaterialRevision(goApiRequestBody.getPipeline().getRevisions());
+      determineFailingMaterialRevision(goApiRequestBody.getPipeline().getRevisions(), getPluginSettings());
     }
 
     Map<String, Object> response = new HashMap<String, Object>();
@@ -130,9 +135,26 @@ public class GoNotificationPlugin implements GoPlugin {
     return goPluginApiResponse;
   }
 
-  private void determineFailingMaterialRevision(List<MaterialRevision> materialRevisionList) {
+  private void determineFailingMaterialRevision(List<MaterialRevision> materialRevisionList, PluginSettings pluginSettings) {
     MaterialRevision materialRevision = PipelineUtilities.getBuildCauseRevision(materialRevisionList);
     LOGGER.info("Failing Material Revision : " + materialRevision.toString());
+  }
+
+  public PluginSettings getPluginSettings() {
+    DefaultGoApiRequest request = new DefaultGoApiRequest(
+      GET_PLUGIN_SETTINGS_API,
+      "1.0",
+      pluginIdentifier()
+    );
+
+    Map<String, String> requestMap = new HashMap<>();
+    requestMap.put("plugin-id", PLUGIN_ID);
+
+    request.setRequestBody(gson.toJson(requestMap));
+    GoApiResponse response = accessor.submit(request);
+
+    LOGGER.info("getPluginSettings: " + response.responseBody());
+    return gson.fromJson(response.responseBody(), PluginSettings.class);
   }
 
   private boolean hasStageFailed(GoApiRequestBody goApiRequestBody) {
