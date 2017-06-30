@@ -15,6 +15,7 @@ import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
 import me.vinitagrawal.gocd.slack.model.*;
 import org.apache.commons.io.IOUtils;
 
+import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
@@ -171,12 +172,22 @@ public class GoNotificationPlugin implements GoPlugin {
         name + "/instance/" + counter;
       LOGGER.info(" \nConnecting to : " + url);
       URLConnection connection = new URL(url).openConnection();
+      applyAPIAuthentication(connection, pluginSettings);
 
       return gson.fromJson(new InputStreamReader(connection.getInputStream()), PipelineInstance.class);
     } catch (IOException e) {
       e.printStackTrace();
       throw new RuntimeException(e);
     }
+  }
+
+  private URLConnection applyAPIAuthentication(URLConnection connection, PluginSettings pluginSettings) {
+    if (!isNullOrEmpty(pluginSettings.getServerApiUsername()) && !isNullOrEmpty(pluginSettings.getServerApiPassword())) {
+      String userpass = pluginSettings.getServerApiUsername() + ":" + pluginSettings.getServerApiPassword();
+      String basicAuth = "Basic " + DatatypeConverter.printBase64Binary(userpass.getBytes());
+      connection.setRequestProperty("Authorization", basicAuth);
+    }
+    return connection;
   }
 
   public PluginSettings getPluginSettings() {

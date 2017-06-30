@@ -14,4 +14,12 @@ public class PluginSettings {
   public String getServerBaseUrl() {
     return serverBaseUrl;
   }
+
+  public String getServerApiUsername() {
+    return serverApiUsername;
+  }
+
+  public String getServerApiPassword() {
+    return serverApiPassword;
+  }
 }
