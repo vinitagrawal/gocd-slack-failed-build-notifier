@@ -10,8 +10,15 @@ public class Stage {
   @SerializedName("result")
   private String result;
 
+  @SerializedName("counter")
+  private int counter;
+
   public String getResult() {
     return result;
+  }
+
+  public String getPath() {
+    return name + "/" + counter;
   }
 }
 

@@ -1,26 +1,25 @@
 {
   "material": {
-    "pipeline-configuration": {
-      "pipeline-name": "mocks",
-      "stage-name": "MockServer"
-    },
-    "type": "pipeline"
+    "fingerprint": "cf0d821a7390746adcb757f392fe00bd1f6cf0f5c3c63b8612791cc72b8c9921",
+    "description": "mocks",
+    "id": 3.0,
+    "type": "Pipeline"
   },
   "changed": true,
   "modifications": [
     {
       "revision": "mocks/2/MockServer/1",
-      "modified-time": "2017-06-20T11:50:30.619Z",
+      "modified_time": 1497939630000,
       "data": {}
     },
     {
       "revision": "mocks/2/MockServer/3",
-      "modified-time": "2017-06-20T16:50:30.619Z",
+      "modified_time": 1497957630000,
       "data": {}
     },
     {
       "revision": "kernel/1/MockServer/2",
-      "modified-time": "2017-06-20T14:50:30.619Z",
+      "modified_time": 1497950430000,
       "data": {}
     }
   ]

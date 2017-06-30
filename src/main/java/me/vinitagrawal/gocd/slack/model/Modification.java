@@ -2,16 +2,15 @@ package me.vinitagrawal.gocd.slack.model;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.util.Date;
+
 public class Modification {
 
-  @SerializedName("modified-time")
-  private String modifiedTime;
+  @SerializedName("modified_time")
+  private long modifiedTime;
 
   @SerializedName("revision")
   private String revision;
-
-  @SerializedName("email_address")
-  private String emailAddress;
 
   @SerializedName("user_name")
   private String userName;
@@ -19,11 +18,15 @@ public class Modification {
   @SerializedName("comment")
   private String comment;
 
-  public String getModifiedTime() {
-    return modifiedTime;
+  public Date getModifiedTime() {
+    return new Date(modifiedTime);
   }
 
   public String getRevision() {
     return revision;
+  }
+
+  public String getMessage() {
+    return "\n" + revision + "\n" + comment + " - " + userName;
   }
 }

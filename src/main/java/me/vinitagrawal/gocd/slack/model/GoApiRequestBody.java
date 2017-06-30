@@ -38,12 +38,12 @@ public class GoApiRequestBody {
       return name;
     }
 
-    public List<MaterialRevision> getRevisions() {
-      return revisions;
-    }
-
     public int getCounter() {
       return counter;
+    }
+
+    public String getPath() {
+      return name + "/" + counter + "/" + getStage().getPath();
     }
   }
 }

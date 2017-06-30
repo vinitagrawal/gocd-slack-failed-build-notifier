@@ -6,8 +6,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import static me.vinitagrawal.gocd.slack.utils.DateUtils.convertStringToDate;
-
 public class MaterialRevision {
 
   @SerializedName("modifications")
@@ -19,7 +17,7 @@ public class MaterialRevision {
   @SerializedName("changed")
   private boolean changed;
 
-  private List<Modification> getModifications() {
+  public List<Modification> getModifications() {
     return modifications;
   }
 
@@ -31,9 +29,18 @@ public class MaterialRevision {
     return changed;
   }
 
+  public String getMaterialDescription() {
+    return "\n" + getMaterial().get("description").toString();
+  }
+
   public boolean isBuildCauseTypePipeline() {
     String materialType = getMaterial().get("type").toString();
     return materialType.equalsIgnoreCase("pipeline");
+  }
+
+  public boolean isBuildCauseTypeGit() {
+    String materialType = getMaterial().get("type").toString();
+    return materialType.equalsIgnoreCase("git");
   }
 
   public Modification getBuildCauseModification() {
@@ -45,27 +52,24 @@ public class MaterialRevision {
   }
 
   public Date getLatestModifiedTime() {
-    String recentTime = getModifications().get(0).getModifiedTime();
+    Date recentTime = getModifications().get(0).getModifiedTime();
     for(int i=1; i<modifications.size(); i++) {
       recentTime = getRecentTime(recentTime, modifications.get(i).getModifiedTime());
     }
 
-    return convertStringToDate(recentTime);
+    return recentTime;
   }
 
   private Modification getRecentModification(Modification recentModification, Modification modification) {
-    String recentTime = getRecentTime(recentModification.getModifiedTime(), modification.getModifiedTime());
+    Date recentTime = getRecentTime(recentModification.getModifiedTime(), modification.getModifiedTime());
     if (modification.getModifiedTime().equals(recentTime))
       return modification;
 
     return recentModification;
   }
 
-  private String getRecentTime(String recentTime, String modifiedTime) {
-    Date latestDate = convertStringToDate(recentTime);
-    Date date = convertStringToDate(modifiedTime);
-
-    if (date != null && latestDate != null && date.after(latestDate))
+  private Date getRecentTime(Date recentTime, Date modifiedTime) {
+    if (modifiedTime != null && recentTime != null && modifiedTime.after(recentTime))
       return modifiedTime;
 
     return recentTime;

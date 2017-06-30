@@ -8,10 +8,10 @@ import org.junit.Test;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class MaterialRevisionTest {
@@ -22,15 +22,6 @@ public class MaterialRevisionTest {
   public void setUp() throws Exception {
     String revisionJson = FileUtilities.readFrom("material_revision.json");
     materialRevision = new Gson().fromJson(revisionJson, MaterialRevision.class);
-  }
-
-  @Test
-  public void shouldContainPipelineConfigurationAndTypeInsideMaterial() throws Exception {
-    Map material = materialRevision.getMaterial();
-
-    assertTrue(material.containsKey("type"));
-    assertTrue(material.containsKey("pipeline-configuration"));
-    assertThat(material.get("type").toString(), equalTo("pipeline"));
   }
 
   @Test
@@ -48,7 +39,7 @@ public class MaterialRevisionTest {
     Modification buildCauseModification = materialRevision.getBuildCauseModification();
 
     assertThat(buildCauseModification.getRevision(), equalTo("mocks/2/MockServer/3"));
-    assertThat(buildCauseModification.getModifiedTime(), equalTo("2017-06-20T16:50:30.619Z"));
+    assertThat(buildCauseModification.getModifiedTime().toString(), equalTo("Tue Jun 20 16:50:30 IST 2017"));
   }
 
   @Test
@@ -56,5 +47,12 @@ public class MaterialRevisionTest {
     boolean isBuildCausePipeline = materialRevision.isBuildCauseTypePipeline();
 
     assertTrue(isBuildCausePipeline);
+  }
+
+  @Test
+  public void shouldReturnFalseIfBuildCauseTypeIsGit() throws Exception {
+    boolean isBuildCausePipeline = materialRevision.isBuildCauseTypeGit();
+
+    assertFalse(isBuildCausePipeline);
   }
 }

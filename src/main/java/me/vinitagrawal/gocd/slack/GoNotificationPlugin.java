@@ -45,6 +45,7 @@ public class GoNotificationPlugin implements GoPlugin {
 
   private Gson gson = new Gson();
   private GoApplicationAccessor accessor;
+  private String pipelinePath;
 
   @Override
   public void initializeGoApplicationAccessor(GoApplicationAccessor goApplicationAccessor) {
@@ -127,12 +128,8 @@ public class GoNotificationPlugin implements GoPlugin {
     if (hasStageFailed(goApiRequestBody)) {
       GoApiRequestBody.Pipeline pipeline = goApiRequestBody.getPipeline();
       LOGGER.info(pipeline.getName() + " is failing.");
-      determineFailingCommit(
-        pipeline.getName(),
-        pipeline.getCounter(),
-        pipeline.getRevisions(),
-        getPluginSettings()
-      );
+      pipelinePath = pipeline.getPath();
+      determineFailingCommit(pipeline.getName(), pipeline.getCounter(), getPluginSettings());
     }
 
     Map<String, Object> response = new HashMap<String, Object>();
@@ -143,9 +140,10 @@ public class GoNotificationPlugin implements GoPlugin {
     return goPluginApiResponse;
   }
 
-  private void determineFailingCommit(String pipelineName, int pipelineCounter,
-                                      List<MaterialRevision> materialRevisionList,
-                                      PluginSettings pluginSettings) {
+  private void determineFailingCommit(String pipelineName, int pipelineCounter, PluginSettings pluginSettings) {
+    PipelineInstance pipelineInstance = getPipelineInstance(pluginSettings, pipelineName, pipelineCounter);
+    LOGGER.info("PipelineInstance : " + new Gson().toJson(pipelineInstance));
+    List<MaterialRevision> materialRevisionList = pipelineInstance.getBuildCause().getRevisions();
     MaterialRevision materialRevision = getChangedMaterialRevision(materialRevisionList);
 
     if(materialRevision == null) {
@@ -159,16 +157,22 @@ public class GoNotificationPlugin implements GoPlugin {
       String[] pipelineRevision = revision.split("/");
       pipelineName = pipelineRevision[0];
       pipelineCounter = Integer.parseInt(pipelineRevision[1]);
-      PipelineInstance pipelineInstance = getPipelineInstance(pluginSettings, pipelineName, pipelineCounter);
 
-      LOGGER.info("PipelineInstance : " + new Gson().toJson(pipelineInstance));
-      determineFailingCommit(
-        pipelineName,
-        pipelineCounter,
-        pipelineInstance.getBuildCause().getRevisions(),
-        pluginSettings
-      );
+      determineFailingCommit(pipelineName, pipelineCounter, pluginSettings);
     }
+    else if (materialRevision.isBuildCauseTypeGit()) {
+      LOGGER.info(getMessage(materialRevision, pluginSettings));
+    }
+  }
+
+  private String getMessage(MaterialRevision materialRevision, PluginSettings pluginSettings) {
+    String message = "\n\nThe Pipeline " + pipelinePath + " is failing."
+      + "\n" + pluginSettings.getServerBaseUrl() + "/go/pipelines/" + pipelinePath
+      + "\nFailing Commit : " + materialRevision.getMaterialDescription();
+    for(Modification modification : materialRevision.getModifications()) {
+      message = message.concat(modification.getMessage());
+    }
+    return message;
   }
 
   private PipelineInstance getPipelineInstance(PluginSettings pluginSettings, String name, int counter) {
