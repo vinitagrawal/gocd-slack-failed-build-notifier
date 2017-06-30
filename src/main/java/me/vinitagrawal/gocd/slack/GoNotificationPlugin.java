@@ -13,6 +13,7 @@ import com.thoughtworks.go.plugin.api.request.GoPluginApiRequest;
 import com.thoughtworks.go.plugin.api.response.GoApiResponse;
 import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
 import me.vinitagrawal.gocd.slack.model.*;
+import me.vinitagrawal.gocd.slack.utils.PipelineUtilities;
 import org.apache.commons.io.IOUtils;
 
 import javax.xml.bind.DatatypeConverter;
@@ -145,7 +146,11 @@ public class GoNotificationPlugin implements GoPlugin {
   private void determineFailingCommit(String pipelineName, int pipelineCounter,
                                       List<MaterialRevision> materialRevisionList,
                                       PluginSettings pluginSettings) {
-    MaterialRevision materialRevision = getBuildCauseRevision(materialRevisionList);
+    MaterialRevision materialRevision = getChangedMaterialRevision(materialRevisionList);
+
+    if(materialRevision == null) {
+      materialRevision = PipelineUtilities.getBuildCauseRevision(materialRevisionList);
+    }
 
     if (materialRevision.isBuildCauseTypePipeline()) {
       String revision = getPipelineRevision(materialRevision);
@@ -207,7 +212,7 @@ public class GoNotificationPlugin implements GoPlugin {
     return gson.fromJson(response.responseBody(), PluginSettings.class);
   }
 
-  private MaterialRevision getBuildCauseRevision(List<MaterialRevision> revisions) {
+  private MaterialRevision getChangedMaterialRevision(List<MaterialRevision> revisions) {
     for(MaterialRevision materialRevision : revisions) {
       if(materialRevision.isChanged())
         return materialRevision;

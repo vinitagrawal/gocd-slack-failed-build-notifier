@@ -13,7 +13,7 @@ import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Matchers;
+import org.mockito.ArgumentMatchers;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -61,7 +61,7 @@ public class GoNotificationPluginTest {
 
   private void setupPluginSettings() {
     accessor = mock(GoApplicationAccessor.class);
-    when(accessor.submit(Matchers.any(GoApiRequest.class))).thenReturn(getGoApiResponseForPlugin());
+    when(accessor.submit(ArgumentMatchers.any(GoApiRequest.class))).thenReturn(getGoApiResponseForPlugin());
 
     plugin.initializeGoApplicationAccessor(accessor);
   }
@@ -90,6 +90,17 @@ public class GoNotificationPluginTest {
     setupURLConnection();
 
     GoPluginApiResponse apiResponse = handlePluginRequest(REQUEST_STAGE_STATUS, "go_api_request_body.json");
+
+    assertThat(apiResponse, is(notNullValue()));
+    assertThat(apiResponse.responseBody(), equalTo("{\"status\":\"success\"}"));
+  }
+
+  @Test
+  public void shouldHandleStageStatusWhenChangedIsFalseAndReturnSuccess() throws Exception {
+    setupPluginSettings();
+    setupURLConnection();
+
+    GoPluginApiResponse apiResponse = handlePluginRequest(REQUEST_STAGE_STATUS, "go_api_request_body_with_changed_false.json");
 
     assertThat(apiResponse, is(notNullValue()));
     assertThat(apiResponse.responseBody(), equalTo("{\"status\":\"success\"}"));
