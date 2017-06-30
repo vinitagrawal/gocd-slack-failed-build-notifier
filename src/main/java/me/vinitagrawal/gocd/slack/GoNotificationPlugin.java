@@ -99,7 +99,6 @@ public class GoNotificationPlugin implements GoPlugin {
     Map<String, Object> requestMap = gson.fromJson(goPluginApiRequest.requestBody(), Map.class);
     Map<String, String> configuration = keyValuePairs(requestMap, "plugin-settings");
     String server_base_url = configuration.get("server_base_url");
-    LOGGER.info("\n\nPlugin Settings : " + requestMap + "\n\n");
 
     if(isNullOrEmpty(server_base_url)) {
       List<Map<String, Object>> response = new ArrayList<Map<String, Object>>();
@@ -117,32 +116,30 @@ public class GoNotificationPlugin implements GoPlugin {
     Map<String, Object> response = new HashMap<String, Object>();
     response.put("notifications", Arrays.asList(REQUEST_STAGE_STATUS));
 
-    GoPluginApiResponse goPluginApiResponse = renderJSON(SUCCESS_RESPONSE_CODE, response);
-    LOGGER.info("Response : " + goPluginApiResponse.responseBody());
-    return goPluginApiResponse;
+    return renderJSON(SUCCESS_RESPONSE_CODE, response);
   }
 
   private GoPluginApiResponse handleStageStatus(GoPluginApiRequest goPluginApiRequest) {
     GoApiRequestBody goApiRequestBody = gson.fromJson(goPluginApiRequest.requestBody(), GoApiRequestBody.class);
+    Map<String, Object> response = new HashMap<String, Object>();
 
-    if (hasStageFailed(goApiRequestBody)) {
-      GoApiRequestBody.Pipeline pipeline = goApiRequestBody.getPipeline();
-      LOGGER.info(pipeline.getName() + " is failing.");
-      pipelinePath = pipeline.getPath();
-      determineFailingCommit(pipeline.getName(), pipeline.getCounter(), getPluginSettings());
+    try {
+      response.put("status", "success");
+      if (hasStageFailed(goApiRequestBody)) {
+        GoApiRequestBody.Pipeline pipeline = goApiRequestBody.getPipeline();
+        pipelinePath = pipeline.getPath();
+        determineFailingCommit(pipeline.getName(), pipeline.getCounter(), getPluginSettings());
+      }
+    } catch (Exception e) {
+      response.put("status", "failure");
+      response.put("messages",Arrays.asList(e.getStackTrace()));
     }
 
-    Map<String, Object> response = new HashMap<String, Object>();
-    response.put("status", "success");
-    GoPluginApiResponse goPluginApiResponse = renderJSON(SUCCESS_RESPONSE_CODE, response);
-    LOGGER.info("\n\nResponse : " + goPluginApiResponse.responseBody());
-
-    return goPluginApiResponse;
+    return renderJSON(SUCCESS_RESPONSE_CODE, response);
   }
 
   private void determineFailingCommit(String pipelineName, int pipelineCounter, PluginSettings pluginSettings) {
     PipelineInstance pipelineInstance = getPipelineInstance(pluginSettings, pipelineName, pipelineCounter);
-    LOGGER.info("PipelineInstance : " + new Gson().toJson(pipelineInstance));
     List<MaterialRevision> materialRevisionList = pipelineInstance.getBuildCause().getRevisions();
     MaterialRevision materialRevision = getChangedMaterialRevision(materialRevisionList);
 
@@ -152,7 +149,6 @@ public class GoNotificationPlugin implements GoPlugin {
 
     if (materialRevision.isBuildCauseTypePipeline()) {
       String revision = getPipelineRevision(materialRevision);
-      LOGGER.info("Pipeline Revision: " + revision);
 
       String[] pipelineRevision = revision.split("/");
       pipelineName = pipelineRevision[0];
@@ -212,7 +208,6 @@ public class GoNotificationPlugin implements GoPlugin {
     request.setRequestBody(gson.toJson(requestMap));
     GoApiResponse response = accessor.submit(request);
 
-    LOGGER.info("getPluginSettings: " + response.responseBody());
     return gson.fromJson(response.responseBody(), PluginSettings.class);
   }
 
