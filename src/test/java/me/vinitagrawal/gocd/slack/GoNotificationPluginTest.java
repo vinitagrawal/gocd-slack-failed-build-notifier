@@ -29,8 +29,7 @@ import static me.vinitagrawal.gocd.slack.GoNotificationPlugin.*;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(GoNotificationPlugin.class)
@@ -39,7 +38,6 @@ public class GoNotificationPluginTest {
   private static final String INTERESTED_NOTIFICATION_RESPONSE = "{\"notifications\":[\"stage-status\"]}";
   private GoNotificationPlugin plugin;
   private GoPluginApiRequest request;
-  private GoApplicationAccessor accessor;
 
   @Before
   public void setUp() throws Exception {
@@ -60,7 +58,7 @@ public class GoNotificationPluginTest {
   }
 
   private void setupPluginSettings() {
-    accessor = mock(GoApplicationAccessor.class);
+    GoApplicationAccessor accessor = mock(GoApplicationAccessor.class);
     when(accessor.submit(ArgumentMatchers.any(GoApiRequest.class))).thenReturn(getGoApiResponseForPlugin());
 
     plugin.initializeGoApplicationAccessor(accessor);
@@ -95,26 +93,17 @@ public class GoNotificationPluginTest {
     assertThat(apiResponse.responseBody(), equalTo("{\"status\":\"success\"}"));
   }
 
-  @Test
-  public void shouldHandleStageStatusWhenChangedIsFalseAndReturnSuccess() throws Exception {
-    setupPluginSettings();
-    setupURLConnection();
-
-    GoPluginApiResponse apiResponse = handlePluginRequest(REQUEST_STAGE_STATUS, "go_api_request_body_with_changed_false.json");
-
-    assertThat(apiResponse, is(notNullValue()));
-    assertThat(apiResponse.responseBody(), equalTo("{\"status\":\"success\"}"));
-  }
-
   private void setupURLConnection() throws Exception {
     URL url = PowerMockito.mock(URL.class);
     URLConnection connection = mock(URLConnection.class);
-    String pipelineInstance = FileUtilities.readFrom("pipeline_instance.json");
-    InputStream inputStream = IOUtils.toInputStream(pipelineInstance);
+    String pipelineInstance1 = FileUtilities.readFrom("pipeline_instance_changed_false.json");
+    InputStream inputStream1 = IOUtils.toInputStream(pipelineInstance1);
+    String pipelineInstance2 = FileUtilities.readFrom("pipeline_instance.json");
+    InputStream inputStream2 = IOUtils.toInputStream(pipelineInstance2);
 
     PowerMockito.whenNew(URL.class).withAnyArguments().thenReturn(url);
     when(url.openConnection()).thenReturn(connection);
-    when(connection.getInputStream()).thenReturn(inputStream);
+    when(connection.getInputStream()).thenReturn(inputStream1).thenReturn(inputStream2);
   }
 
   @Test
