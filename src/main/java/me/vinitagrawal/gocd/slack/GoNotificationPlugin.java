@@ -13,6 +13,7 @@ import com.thoughtworks.go.plugin.api.request.GoPluginApiRequest;
 import com.thoughtworks.go.plugin.api.response.GoApiResponse;
 import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
 import me.vinitagrawal.gocd.slack.model.*;
+import me.vinitagrawal.gocd.slack.notifier.Message;
 import me.vinitagrawal.gocd.slack.notifier.SlackNotifier;
 import me.vinitagrawal.gocd.slack.utils.PipelineUtilities;
 import org.apache.commons.io.IOUtils;
@@ -136,7 +137,7 @@ public class GoNotificationPlugin implements GoPlugin {
       }
     } catch (Exception e) {
       response.put("status", "failure");
-      response.put("messages",Arrays.asList(e.getStackTrace()));
+      response.put("messages",Arrays.asList(e.getMessage()));
     }
 
     return renderJSON(SUCCESS_RESPONSE_CODE, response);
@@ -161,13 +162,13 @@ public class GoNotificationPlugin implements GoPlugin {
       determineFailingCommit(pipelineName, pipelineCounter, pluginSettings);
     }
     else if (materialRevision.isBuildCauseTypeGit()) {
-      String message = getMessage(materialRevision, pluginSettings);
-      LOGGER.info(message);
+      Message message = getMessage(materialRevision, pluginSettings);
+      LOGGER.info(message.toString());
       postMessageToSlack(pluginSettings, message);
     }
   }
 
-  private void postMessageToSlack(PluginSettings pluginSettings, String message) {
+  private void postMessageToSlack(PluginSettings pluginSettings, Message message) {
     LOGGER.info("\nPosting to slack\n");
     SlackNotifier slackNotifier = new SlackNotifier(
       pluginSettings.getSlackOAuthToken(),
@@ -177,13 +178,16 @@ public class GoNotificationPlugin implements GoPlugin {
     slackNotifier.postMessage(message);
   }
 
-  private String getMessage(MaterialRevision materialRevision, PluginSettings pluginSettings) {
-    String message = "\n\nThe Pipeline " + pipelinePath + " is failing."
-      + "\n" + pluginSettings.getServerBaseUrl() + "/go/pipelines/" + pipelinePath
-      + "\nFailing Commit : " + materialRevision.getMaterialDescription();
-    for(Modification modification : materialRevision.getModifications()) {
-      message = message.concat(modification.getMessage());
-    }
+  private Message getMessage(MaterialRevision materialRevision, PluginSettings pluginSettings) {
+    Message message = new Message();
+    message.setTitle("The Pipeline " + pipelinePath + " is failing.");
+    message.setAttachmentTitle(pluginSettings.getServerBaseUrl() + "/go/pipelines/" + pipelinePath);
+    message.addField("Pipeline", pipelinePath);
+    message.addField("Repository", materialRevision.getMaterialDescription());
+    message.addField("Status", "Failed");
+    message.addField("Owners", materialRevision.getCommitOwners());
+    message.addField("Changes", materialRevision.getChanges());
+
     return message;
   }
 

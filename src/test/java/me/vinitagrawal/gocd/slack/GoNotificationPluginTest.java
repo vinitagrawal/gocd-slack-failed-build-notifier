@@ -8,6 +8,7 @@ import com.thoughtworks.go.plugin.api.request.GoPluginApiRequest;
 import com.thoughtworks.go.plugin.api.response.GoApiResponse;
 import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
 import me.vinitagrawal.gocd.slack.model.PluginSettings;
+import me.vinitagrawal.gocd.slack.notifier.Message;
 import me.vinitagrawal.gocd.slack.notifier.SlackNotifier;
 import me.vinitagrawal.gocd.slack.testUtils.FileUtilities;
 import org.apache.commons.io.IOUtils;
@@ -91,7 +92,7 @@ public class GoNotificationPluginTest {
 
     GoPluginApiResponse apiResponse = handlePluginRequest(REQUEST_STAGE_STATUS, "go_api_request_body.json");
 
-    verify(slackNotifier, times(1)).postMessage(ArgumentMatchers.any(String.class));
+    verify(slackNotifier, times(1)).postMessage(ArgumentMatchers.any(Message.class));
     assertThat(apiResponse, is(notNullValue()));
     assertThat(apiResponse.responseBody(), equalTo("{\"status\":\"success\"}"));
   }
