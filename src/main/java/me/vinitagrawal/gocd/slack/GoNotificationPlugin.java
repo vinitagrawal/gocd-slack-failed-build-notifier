@@ -15,7 +15,6 @@ import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
 import me.vinitagrawal.gocd.slack.model.*;
 import me.vinitagrawal.gocd.slack.notifier.Message;
 import me.vinitagrawal.gocd.slack.notifier.SlackNotifier;
-import me.vinitagrawal.gocd.slack.utils.PipelineUtilities;
 import org.apache.commons.io.IOUtils;
 
 import javax.xml.bind.DatatypeConverter;
@@ -26,6 +25,7 @@ import java.net.URLConnection;
 import java.util.*;
 
 import static java.util.Arrays.asList;
+import static me.vinitagrawal.gocd.slack.utils.TextUtils.isNullOrEmpty;
 
 @Extension
 public class GoNotificationPlugin implements GoPlugin {
@@ -130,7 +130,7 @@ public class GoNotificationPlugin implements GoPlugin {
 
     try {
       response.put("status", "success");
-      if (hasStageFailed(goApiRequestBody)) {
+      if (goApiRequestBody.hasStageFailed()) {
         GoApiRequestBody.Pipeline pipeline = goApiRequestBody.getPipeline();
         pipelinePath = pipeline.getPath();
         determineFailingCommit(pipeline.getName(), pipeline.getCounter(), getPluginSettings());
@@ -145,15 +145,10 @@ public class GoNotificationPlugin implements GoPlugin {
 
   private void determineFailingCommit(String pipelineName, int pipelineCounter, PluginSettings pluginSettings) {
     PipelineInstance pipelineInstance = getPipelineInstance(pluginSettings, pipelineName, pipelineCounter);
-    List<MaterialRevision> materialRevisionList = pipelineInstance.getBuildCause().getRevisions();
-    MaterialRevision materialRevision = getChangedMaterialRevision(materialRevisionList);
-
-    if(materialRevision == null) {
-      materialRevision = PipelineUtilities.getBuildCauseRevision(materialRevisionList);
-    }
+    MaterialRevision materialRevision = pipelineInstance.getBuildCauseRevision();
 
     if (materialRevision.isBuildCauseTypePipeline()) {
-      String revision = getPipelineRevision(materialRevision);
+      String revision = materialRevision.getPipelineRevision();
 
       String[] pipelineRevision = revision.split("/");
       pipelineName = pipelineRevision[0];
@@ -229,29 +224,6 @@ public class GoNotificationPlugin implements GoPlugin {
     GoApiResponse response = accessor.submit(request);
 
     return gson.fromJson(response.responseBody(), PluginSettings.class);
-  }
-
-  private MaterialRevision getChangedMaterialRevision(List<MaterialRevision> revisions) {
-    for(MaterialRevision materialRevision : revisions) {
-      if(materialRevision.isChanged())
-        return materialRevision;
-    }
-
-    return null;
-  }
-
-  private String getPipelineRevision(MaterialRevision materialRevision) {
-    Modification modification = materialRevision.getBuildCauseModification();
-    return modification.getRevision();
-  }
-
-  private boolean hasStageFailed(GoApiRequestBody goApiRequestBody) {
-    String result = goApiRequestBody.getPipeline().getStage().getResult();
-    return result.equals("Failed");
-  }
-
-  private boolean isNullOrEmpty(String value) {
-    return value == null || "".equals(value.trim());
   }
 
   private Map<String, Object> createField(String displayName, String defaultValue, boolean isRequired, boolean isSecure, String displayOrder) {

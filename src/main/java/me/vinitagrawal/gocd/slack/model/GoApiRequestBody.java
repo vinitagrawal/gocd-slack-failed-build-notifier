@@ -30,10 +30,6 @@ public class GoApiRequestBody {
     @SerializedName("stage")
     private Stage stage;
 
-    public Stage getStage() {
-      return stage;
-    }
-
     public String getName() {
       return name;
     }
@@ -43,7 +39,12 @@ public class GoApiRequestBody {
     }
 
     public String getPath() {
-      return name + "/" + counter + "/" + getStage().getPath();
+      return name + "/" + counter + "/" + stage.getPath();
     }
+  }
+
+  public boolean hasStageFailed() {
+    String result = getPipeline().stage.getResult();
+    return result.equals("Failed");
   }
 }

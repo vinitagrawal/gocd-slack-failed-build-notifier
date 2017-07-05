@@ -7,6 +7,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import static me.vinitagrawal.gocd.slack.utils.TextUtils.isNullOrEmpty;
+
 public class MaterialRevision {
 
   @SerializedName("modifications")
@@ -44,7 +46,12 @@ public class MaterialRevision {
     return materialType.equalsIgnoreCase("git");
   }
 
-  public Modification getBuildCauseModification() {
+  public String getPipelineRevision() {
+    Modification modification = getBuildCauseModification();
+    return modification.getRevision();
+  }
+
+  private Modification getBuildCauseModification() {
     Modification modification = getModifications().get(0);
     for (int i=1; i<getModifications().size(); i++) {
       modification = getRecentModification(modification, getModifications().get(i));
@@ -79,7 +86,8 @@ public class MaterialRevision {
   public String getCommitOwners() {
     List<String> ownerList = new ArrayList<>();
     for(Modification modification : getModifications()) {
-      if(!ownerList.contains(modification.getUserName()))
+      if(!isNullOrEmpty(modification.getUserName()) &&
+        !ownerList.contains(modification.getUserName()))
         ownerList.add(modification.getUserName());
     }
 

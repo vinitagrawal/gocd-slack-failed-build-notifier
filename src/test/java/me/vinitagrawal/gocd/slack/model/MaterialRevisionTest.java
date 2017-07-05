@@ -29,30 +29,53 @@ public class MaterialRevisionTest {
     Date latestDate = materialRevision.getLatestModifiedTime();
 
     SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-    Date date = simpleDateFormat.parse("2017-06-20T16:50:30.619Z");
+    Date date = simpleDateFormat.parse("2017-06-20T22:40:30.619Z");
 
     assertThat(latestDate, DateMatchers.sameInstant(date));
   }
 
   @Test
-  public void shouldReturnModificationWhichCausedTheBuild() throws Exception {
-    Modification buildCauseModification = materialRevision.getBuildCauseModification();
+  public void shouldReturnModificationRevisionWhichCausedTheBuild() throws Exception {
+    String revision = materialRevision.getPipelineRevision();
 
-    assertThat(buildCauseModification.getRevision(), equalTo("mocks/2/MockServer/3"));
-    assertThat(buildCauseModification.getModifiedTime().toString(), equalTo("Tue Jun 20 16:50:30 IST 2017"));
+    assertThat(revision, equalTo("a788f1876e26e5a1e91006e75cd1d467a0edb"));
   }
 
   @Test
   public void shouldReturnTrueIfBuildCauseTypeIsPipeline() throws Exception {
     boolean isBuildCausePipeline = materialRevision.isBuildCauseTypePipeline();
 
-    assertTrue(isBuildCausePipeline);
+    assertFalse(isBuildCausePipeline);
   }
 
   @Test
   public void shouldReturnFalseIfBuildCauseTypeIsGit() throws Exception {
     boolean isBuildCausePipeline = materialRevision.isBuildCauseTypeGit();
 
-    assertFalse(isBuildCausePipeline);
+    assertTrue(isBuildCausePipeline);
+  }
+
+  @Test
+  public void shouldReturnDescriptionOfTheMaterial() throws Exception {
+    String materialDescription = materialRevision.getMaterialDescription();
+
+    assertThat(materialDescription, equalTo("\nURL: https://github.com/gocd/gocd, Branch: master"));
+  }
+
+  @Test
+  public void shouldReturnCommitOwners() throws Exception {
+    String commitOwners = materialRevision.getCommitOwners();
+
+    assertThat(commitOwners, equalTo("Pick E Reader <pick.e.reader@example.com>"));
+  }
+
+  @Test
+  public void shouldReturnMaterialChanges() throws Exception {
+    String changes = materialRevision.getChanges();
+
+    String expected = "\nSHA : a788f1876e2e1f61e91006e75cd1d467a0edb\nmy hola mundo changes"
+      + "\nSHA : a788f1876e26e5a1e91006e75cd1d467a0edb\nmy hola mundo changes"
+      + "\nSHA : a788f1876e2e1f6e5a1e91006e75cd1d467a0edb\nmy hola mundo changes";
+    assertThat(changes, equalTo(expected));
   }
 }
