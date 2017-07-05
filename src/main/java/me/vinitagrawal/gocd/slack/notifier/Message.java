@@ -7,15 +7,18 @@ public class Message {
 
   private String title;
   private String attachmentTitle;
+  private String changes;
   private List<Field> fields = new ArrayList<>();
 
   public class Field {
     private String title;
     private String value;
+    private boolean isValueShort;
 
-    public Field(String title, String value) {
+    public Field(String title, String value, boolean isValueShort) {
       this.title = title;
       this.value = value;
+      this.isValueShort = isValueShort;
     }
 
     public String getTitle() {
@@ -26,17 +29,22 @@ public class Message {
       return value;
     }
 
+    public boolean isValueShort() {
+      return isValueShort;
+    }
+
     @Override
     public String toString() {
       return "Field{" +
         "title='" + title + '\'' +
         ", value='" + value + '\'' +
+        ", isValueShort=" + isValueShort +
         '}';
     }
   }
 
-  public void addField(String title, String value) {
-    fields.add(new Field(title, value));
+  public void addField(String title, String value, boolean isValueShort) {
+    fields.add(new Field(title, value, isValueShort));
   }
 
   public List<Field> getFields() {
@@ -59,11 +67,20 @@ public class Message {
     this.attachmentTitle = attachmentTitle;
   }
 
+  public String getChanges() {
+    return changes;
+  }
+
+  public void setChanges(String changes) {
+    this.changes = changes;
+  }
+
   @Override
   public String toString() {
     return "Message{" +
       "title='" + title + '\'' +
       ", attachmentTitle='" + attachmentTitle + '\'' +
+      ", changes='" + changes + '\'' +
       ", fields=" + fields +
       '}';
   }

@@ -26,15 +26,23 @@ public class SlackNotifier {
 
   public void postMessage(Message message) {
     try {
+      Attachment changesAttachment = Attachment.builder()
+        .title("Changes")
+        .text(message.getChanges())
+        .color("#F44336")
+        .build();
+
       Attachment attachment = Attachment.builder()
-        .text(message.getAttachmentTitle())
+        .title(message.getAttachmentTitle())
         .fields(new ArrayList<Field>())
+        .color("#F44336")
         .build();
 
       for(Message.Field messageField : message.getFields()) {
         Field field = Field.builder()
           .title(messageField.getTitle())
           .value(messageField.getValue())
+          .valueShortEnough(messageField.isValueShort())
           .build();
         attachment.getFields().add(field);
       }
@@ -45,7 +53,7 @@ public class SlackNotifier {
           .channel(channelName)
           .text(message.getTitle())
           .username(userName)
-          .attachments(Arrays.asList(attachment))
+          .attachments(Arrays.asList(attachment, changesAttachment))
           .build()
       );
 
