@@ -27,6 +27,6 @@ public class Modification {
   }
 
   public String getMessage() {
-    return "\n" + revision + "\n" + comment + " - " + userName;
+    return "\n" + userName + "\nSHA : " + revision + "\n" + comment;
   }
 }

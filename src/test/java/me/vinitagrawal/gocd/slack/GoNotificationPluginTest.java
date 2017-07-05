@@ -8,6 +8,7 @@ import com.thoughtworks.go.plugin.api.request.GoPluginApiRequest;
 import com.thoughtworks.go.plugin.api.response.GoApiResponse;
 import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
 import me.vinitagrawal.gocd.slack.model.PluginSettings;
+import me.vinitagrawal.gocd.slack.notifier.SlackNotifier;
 import me.vinitagrawal.gocd.slack.testUtils.FileUtilities;
 import org.apache.commons.io.IOUtils;
 import org.junit.Before;
@@ -86,11 +87,19 @@ public class GoNotificationPluginTest {
   public void shouldHandleStageStatusAndReturnSuccess() throws Exception {
     setupPluginSettings();
     setupURLConnection();
+    SlackNotifier slackNotifier = getSlackNotifier();
 
     GoPluginApiResponse apiResponse = handlePluginRequest(REQUEST_STAGE_STATUS, "go_api_request_body.json");
 
+    verify(slackNotifier, times(1)).postMessage(ArgumentMatchers.any(String.class));
     assertThat(apiResponse, is(notNullValue()));
     assertThat(apiResponse.responseBody(), equalTo("{\"status\":\"success\"}"));
+  }
+
+  private SlackNotifier getSlackNotifier() throws Exception {
+    SlackNotifier slackNotifier = PowerMockito.mock(SlackNotifier.class);
+    PowerMockito.whenNew(SlackNotifier.class).withAnyArguments().thenReturn(slackNotifier);
+    return slackNotifier;
   }
 
   private void setupURLConnection() throws Exception {

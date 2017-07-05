@@ -13,6 +13,7 @@ import com.thoughtworks.go.plugin.api.request.GoPluginApiRequest;
 import com.thoughtworks.go.plugin.api.response.GoApiResponse;
 import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
 import me.vinitagrawal.gocd.slack.model.*;
+import me.vinitagrawal.gocd.slack.notifier.SlackNotifier;
 import me.vinitagrawal.gocd.slack.utils.PipelineUtilities;
 import org.apache.commons.io.IOUtils;
 
@@ -80,6 +81,9 @@ public class GoNotificationPlugin implements GoPlugin {
     response.put("server_base_url", createField("Server Base URL", null, true, false, "0"));
     response.put("server_api_username", createField("Server API Username", null, false, false, "0"));
     response.put("server_api_password", createField("Server API Password", null, false, true, "0"));
+    response.put("slack_oauth_token", createField("Slack OAuth Token", null, false, false, "0"));
+    response.put("slack_channel", createField("Slack Channel", null, false, false, "0"));
+    response.put("slack_bot_name", createField("Slack Bot Name", null, false, false, "0"));
     return renderJSON(SUCCESS_RESPONSE_CODE, response);
   }
 
@@ -157,8 +161,20 @@ public class GoNotificationPlugin implements GoPlugin {
       determineFailingCommit(pipelineName, pipelineCounter, pluginSettings);
     }
     else if (materialRevision.isBuildCauseTypeGit()) {
-      LOGGER.info(getMessage(materialRevision, pluginSettings));
+      String message = getMessage(materialRevision, pluginSettings);
+      LOGGER.info(message);
+      postMessageToSlack(pluginSettings, message);
     }
+  }
+
+  private void postMessageToSlack(PluginSettings pluginSettings, String message) {
+    LOGGER.info("\nPosting to slack\n");
+    SlackNotifier slackNotifier = new SlackNotifier(
+      pluginSettings.getSlackOAuthToken(),
+      pluginSettings.getSlackChannelName(),
+      pluginSettings.getSlackBotName());
+
+    slackNotifier.postMessage(message);
   }
 
   private String getMessage(MaterialRevision materialRevision, PluginSettings pluginSettings) {

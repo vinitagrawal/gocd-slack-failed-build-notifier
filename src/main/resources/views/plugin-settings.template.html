@@ -1,3 +1,11 @@
+<style>
+    fieldset {
+        padding: 10px;
+    }
+    fieldset > label {
+        font-weight: bold;
+    }
+</style>
 <div class="form_item_block">
     <label>Server Base URL:<span class="asterisk">*</span></label>
     <input type="text" ng-model="server_base_url" ng-required="true" placeholder="http://"/>
@@ -13,3 +21,21 @@
     <input type="password" ng-model="server_api_password" ng-required="false"/>
     <span class="form_error" ng-show="GOINPUTNAME[server_api_password].$error.server">{{ GOINPUTNAME[server_api_password].$error.server }}</span>
 </div>
+<fieldset class="form-item-block">
+    <label>Slack</label>
+    <div class="form_item_block">
+        <label>OAuth Token:</label>
+        <input type="text" ng-model="slack_oauth_token" ng-required="false"/>
+        <span class="form_error" ng-show="GOINPUTNAME[slack_oauth_token].$error.server">{{ GOINPUTNAME[slack_oauth_token].$error.server }}</span>
+    </div>
+    <div class="form_item_block">
+        <label>Channel:</label>
+        <input type="text" ng-model="slack_channel" ng-required="false"/>
+        <span class="form_error" ng-show="GOINPUTNAME[slack_channel].$error.server">{{ GOINPUTNAME[slack_channel].$error.server }}</span>
+    </div>
+    <div class="form_item_block">
+        <label>Bot Name:</label>
+        <input type="text" ng-model="slack_bot_name" ng-required="false"/>
+        <span class="form_error" ng-show="GOINPUTNAME[slack_bot_name].$error.server">{{ GOINPUTNAME[slack_bot_name].$error.server }}</span>
+    </div>
+</fieldset>

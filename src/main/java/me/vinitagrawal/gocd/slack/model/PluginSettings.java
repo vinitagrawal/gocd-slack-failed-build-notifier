@@ -10,6 +10,12 @@ public class PluginSettings {
   private String serverApiUsername;
   @SerializedName("server_api_password")
   private String serverApiPassword;
+  @SerializedName("slack_oauth_token")
+  private String slackOAuthToken;
+  @SerializedName("slack_channel")
+  private String slackChannelName;
+  @SerializedName("slack_bot_name")
+  private String slackBotName;
 
   public String getServerBaseUrl() {
     return serverBaseUrl;
@@ -21,5 +27,17 @@ public class PluginSettings {
 
   public String getServerApiPassword() {
     return serverApiPassword;
+  }
+
+  public String getSlackOAuthToken() {
+    return slackOAuthToken;
+  }
+
+  public String getSlackChannelName() {
+    return slackChannelName;
+  }
+
+  public String getSlackBotName() {
+    return slackBotName;
   }
 }
