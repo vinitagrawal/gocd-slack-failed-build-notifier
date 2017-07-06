@@ -7,11 +7,13 @@ import com.thoughtworks.go.plugin.api.request.GoApiRequest;
 import com.thoughtworks.go.plugin.api.request.GoPluginApiRequest;
 import com.thoughtworks.go.plugin.api.response.GoApiResponse;
 import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
+import me.vinitagrawal.gocd.slack.apiclient.APIClient;
+import me.vinitagrawal.gocd.slack.model.MaterialRevision;
+import me.vinitagrawal.gocd.slack.model.PipelineInstance;
 import me.vinitagrawal.gocd.slack.model.PluginSettings;
 import me.vinitagrawal.gocd.slack.notifier.Message;
 import me.vinitagrawal.gocd.slack.notifier.SlackNotifier;
 import me.vinitagrawal.gocd.slack.testUtils.FileUtilities;
-import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -21,9 +23,6 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.Arrays;
 import java.util.Map;
 
@@ -87,11 +86,12 @@ public class GoNotificationPluginTest {
   @Test
   public void shouldHandleStageStatusAndReturnSuccess() throws Exception {
     setupPluginSettings();
-    setupURLConnection();
+    APIClient apiClient = setupAPIClient();
     SlackNotifier slackNotifier = getSlackNotifier();
 
     GoPluginApiResponse apiResponse = handlePluginRequest(REQUEST_STAGE_STATUS, "go_api_request_body.json");
 
+    verify(apiClient, times(2)).getPipelineInstance(ArgumentMatchers.anyString(), ArgumentMatchers.anyInt());
     verify(slackNotifier, times(1)).postMessage(ArgumentMatchers.any(Message.class));
     assertThat(apiResponse, is(notNullValue()));
     assertThat(apiResponse.responseBody(), equalTo("{\"status\":\"success\"}"));
@@ -103,17 +103,19 @@ public class GoNotificationPluginTest {
     return slackNotifier;
   }
 
-  private void setupURLConnection() throws Exception {
-    URL url = PowerMockito.mock(URL.class);
-    URLConnection connection = mock(URLConnection.class);
-    String pipelineInstance1 = FileUtilities.readFrom("pipeline_instance_changed_false.json");
-    InputStream inputStream1 = IOUtils.toInputStream(pipelineInstance1);
-    String pipelineInstance2 = FileUtilities.readFrom("pipeline_instance.json");
-    InputStream inputStream2 = IOUtils.toInputStream(pipelineInstance2);
+  private APIClient setupAPIClient() throws Exception {
+    APIClient apiClient = PowerMockito.mock(APIClient.class);
+    String pipeline1 = FileUtilities.readFrom("pipeline_instance_changed_false.json");
+    PipelineInstance pipelineInstance1 = new Gson().fromJson(pipeline1, PipelineInstance.class);
+    String pipeline2 = FileUtilities.readFrom("pipeline_instance.json");
+    PipelineInstance pipelineInstance2 = new Gson().fromJson(pipeline2, PipelineInstance.class);
 
-    PowerMockito.whenNew(URL.class).withAnyArguments().thenReturn(url);
-    when(url.openConnection()).thenReturn(connection);
-    when(connection.getInputStream()).thenReturn(inputStream1).thenReturn(inputStream2);
+    PowerMockito.whenNew(APIClient.class).withAnyArguments().thenReturn(apiClient);
+    when(apiClient.getPipelineInstance(ArgumentMatchers.anyString(), ArgumentMatchers.anyInt()))
+    .thenReturn(pipelineInstance1)
+    .thenReturn(pipelineInstance2);
+
+    return apiClient;
   }
 
   @Test
@@ -165,6 +167,24 @@ public class GoNotificationPluginTest {
 
     PluginSettings pluginSettings = plugin.getPluginSettings();
     assertThat(pluginSettings.getServerBaseUrl(), equalTo("http://localhost:8153"));
+  }
+
+  @Test
+  public void shouldCreateMessageFromMaterialRevision() throws Exception {
+    String revisionJson = FileUtilities.readFrom("material_revision.json");
+    MaterialRevision materialRevision = new Gson().fromJson(revisionJson, MaterialRevision.class);
+    setupPluginSettings();
+    plugin.setPipelinePath("Droid/12/spec/1");
+    Message message = plugin.getMessage(materialRevision, plugin.getPluginSettings());
+
+    assertThat(message.getTitle(), equalTo("The Pipeline Droid/12/spec/1 is failing."));
+    assertThat(message.getAttachmentTitle(), equalTo("http://localhost:8153/go/pipelines/Droid/12/spec/1"));
+    assertThat(message.getFields().size(), equalTo(4));
+
+    String expectedChanges = "\nSHA : a788f1876e2e1f61e91006e75cd1d467a0edb\nmy hola mundo changes"
+      + "\nSHA : a788f1876e26e5a1e91006e75cd1d467a0edb\nmy hola mundo changes"
+      + "\nSHA : a788f1876e2e1f6e5a1e91006e75cd1d467a0edb\nmy hola mundo changes";
+    assertThat(message.getChanges(), equalTo(expectedChanges));
   }
 
   private GoApiResponse getGoApiResponseForPlugin() {

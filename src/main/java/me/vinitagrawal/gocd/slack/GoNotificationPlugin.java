@@ -12,16 +12,16 @@ import com.thoughtworks.go.plugin.api.request.DefaultGoApiRequest;
 import com.thoughtworks.go.plugin.api.request.GoPluginApiRequest;
 import com.thoughtworks.go.plugin.api.response.GoApiResponse;
 import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
-import me.vinitagrawal.gocd.slack.model.*;
+import me.vinitagrawal.gocd.slack.apiclient.APIClient;
+import me.vinitagrawal.gocd.slack.model.GoApiRequestBody;
+import me.vinitagrawal.gocd.slack.model.MaterialRevision;
+import me.vinitagrawal.gocd.slack.model.PipelineInstance;
+import me.vinitagrawal.gocd.slack.model.PluginSettings;
 import me.vinitagrawal.gocd.slack.notifier.Message;
 import me.vinitagrawal.gocd.slack.notifier.SlackNotifier;
 import org.apache.commons.io.IOUtils;
 
-import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.*;
 
 import static java.util.Arrays.asList;
@@ -48,6 +48,7 @@ public class GoNotificationPlugin implements GoPlugin {
   private Gson gson = new Gson();
   private GoApplicationAccessor accessor;
   private String pipelinePath;
+  private APIClient apiClient;
 
   @Override
   public void initializeGoApplicationAccessor(GoApplicationAccessor goApplicationAccessor) {
@@ -132,8 +133,10 @@ public class GoNotificationPlugin implements GoPlugin {
       response.put("status", "success");
       if (goApiRequestBody.hasStageFailed()) {
         GoApiRequestBody.Pipeline pipeline = goApiRequestBody.getPipeline();
-        pipelinePath = pipeline.getPath();
-        determineFailingCommit(pipeline.getName(), pipeline.getCounter(), getPluginSettings());
+        setPipelinePath(pipeline.getPath());
+        PluginSettings pluginSettings = getPluginSettings();
+        setAPIClient(pluginSettings);
+        determineFailingCommit(pipeline.getName(), pipeline.getCounter(), pluginSettings);
       }
     } catch (Exception e) {
       response.put("status", "failure");
@@ -143,8 +146,16 @@ public class GoNotificationPlugin implements GoPlugin {
     return renderJSON(SUCCESS_RESPONSE_CODE, response);
   }
 
+  private void setAPIClient(PluginSettings pluginSettings) {
+    apiClient = new APIClient(
+      pluginSettings.getServerBaseUrl(),
+      pluginSettings.getServerApiUsername(),
+      pluginSettings.getServerApiPassword()
+    );
+  }
+
   private void determineFailingCommit(String pipelineName, int pipelineCounter, PluginSettings pluginSettings) {
-    PipelineInstance pipelineInstance = getPipelineInstance(pluginSettings, pipelineName, pipelineCounter);
+    PipelineInstance pipelineInstance = apiClient.getPipelineInstance(pipelineName, pipelineCounter);
     MaterialRevision materialRevision = pipelineInstance.getBuildCauseRevision();
 
     if (materialRevision.isBuildCauseTypePipeline()) {
@@ -173,7 +184,7 @@ public class GoNotificationPlugin implements GoPlugin {
     slackNotifier.postMessage(message);
   }
 
-  private Message getMessage(MaterialRevision materialRevision, PluginSettings pluginSettings) {
+  public Message getMessage(MaterialRevision materialRevision, PluginSettings pluginSettings) {
     Message message = new Message();
     message.setTitle("The Pipeline " + pipelinePath + " is failing.");
     message.setAttachmentTitle(pluginSettings.getServerBaseUrl() + "/go/pipelines/" + pipelinePath);
@@ -186,28 +197,8 @@ public class GoNotificationPlugin implements GoPlugin {
     return message;
   }
 
-  private PipelineInstance getPipelineInstance(PluginSettings pluginSettings, String name, int counter) {
-    try {
-      String url = pluginSettings.getServerBaseUrl() + "/go/api/pipelines/" +
-        name + "/instance/" + counter;
-      LOGGER.info(" \nConnecting to : " + url);
-      URLConnection connection = new URL(url).openConnection();
-      applyAPIAuthentication(connection, pluginSettings);
-
-      return gson.fromJson(new InputStreamReader(connection.getInputStream()), PipelineInstance.class);
-    } catch (IOException e) {
-      e.printStackTrace();
-      throw new RuntimeException(e);
-    }
-  }
-
-  private URLConnection applyAPIAuthentication(URLConnection connection, PluginSettings pluginSettings) {
-    if (!isNullOrEmpty(pluginSettings.getServerApiUsername()) && !isNullOrEmpty(pluginSettings.getServerApiPassword())) {
-      String userpass = pluginSettings.getServerApiUsername() + ":" + pluginSettings.getServerApiPassword();
-      String basicAuth = "Basic " + DatatypeConverter.printBase64Binary(userpass.getBytes());
-      connection.setRequestProperty("Authorization", basicAuth);
-    }
-    return connection;
+  public void setPipelinePath(String path) {
+    pipelinePath = path;
   }
 
   public PluginSettings getPluginSettings() {
