@@ -49,6 +49,7 @@ public class GoNotificationPlugin implements GoPlugin {
   private GoApplicationAccessor accessor;
   private String pipelinePath;
   private APIClient apiClient;
+  private List<MaterialRevision> materialRevisions;
 
   @Override
   public void initializeGoApplicationAccessor(GoApplicationAccessor goApplicationAccessor) {
@@ -128,16 +129,20 @@ public class GoNotificationPlugin implements GoPlugin {
   private GoPluginApiResponse handleStageStatus(GoPluginApiRequest goPluginApiRequest) {
     GoApiRequestBody goApiRequestBody = gson.fromJson(goPluginApiRequest.requestBody(), GoApiRequestBody.class);
     Map<String, Object> response = new HashMap<String, Object>();
+    PluginSettings pluginSettings = getPluginSettings();
 
     try {
       response.put("status", "success");
       if (goApiRequestBody.hasStageFailed()) {
         GoApiRequestBody.Pipeline pipeline = goApiRequestBody.getPipeline();
         setPipelinePath(pipeline.getPath());
-        PluginSettings pluginSettings = getPluginSettings();
         setAPIClient(pluginSettings);
-        determineFailingCommit(pipeline.getName(), pipeline.getCounter(), pluginSettings);
+        materialRevisions = new ArrayList<>();
+        determineFailingCommit(pipeline.getName(), pipeline.getCounter());
+        Message message = getMessage(pluginSettings, materialRevisions);
+        postMessageToSlack(pluginSettings, message);
       }
+
     } catch (Exception e) {
       response.put("status", "failure");
       response.put("messages",Arrays.asList(e.getMessage()));
@@ -154,28 +159,26 @@ public class GoNotificationPlugin implements GoPlugin {
     );
   }
 
-  private void determineFailingCommit(String pipelineName, int pipelineCounter, PluginSettings pluginSettings) {
+  private void determineFailingCommit(String pipelineName, int pipelineCounter) {
     PipelineInstance pipelineInstance = apiClient.getPipelineInstance(pipelineName, pipelineCounter);
-    MaterialRevision materialRevision = pipelineInstance.getBuildCauseRevision();
+    List<MaterialRevision> materialRevisionList = pipelineInstance.getBuildCauseRevision();
 
-    if (materialRevision.isBuildCauseTypePipeline()) {
-      String revision = materialRevision.getPipelineRevision();
+    for(MaterialRevision materialRevision : materialRevisionList) {
+      if (materialRevision.isBuildCauseTypePipeline()) {
+        String revision = materialRevision.getPipelineRevision();
 
-      String[] pipelineRevision = revision.split("/");
-      pipelineName = pipelineRevision[0];
-      pipelineCounter = Integer.parseInt(pipelineRevision[1]);
+        String[] pipelineRevision = revision.split("/");
+        pipelineName = pipelineRevision[0];
+        pipelineCounter = Integer.parseInt(pipelineRevision[1]);
 
-      determineFailingCommit(pipelineName, pipelineCounter, pluginSettings);
-    }
-    else if (materialRevision.isBuildCauseTypeGit()) {
-      Message message = getMessage(materialRevision, pluginSettings);
-      LOGGER.info(message.toString());
-      postMessageToSlack(pluginSettings, message);
+        determineFailingCommit(pipelineName, pipelineCounter);
+      } else if (materialRevision.isBuildCauseTypeGit()) {
+        materialRevisions.add(materialRevision);
+      }
     }
   }
 
   private void postMessageToSlack(PluginSettings pluginSettings, Message message) {
-    LOGGER.info("\nPosting to slack\n");
     SlackNotifier slackNotifier = new SlackNotifier(
       pluginSettings.getSlackOAuthToken(),
       pluginSettings.getSlackChannelName(),
@@ -184,15 +187,25 @@ public class GoNotificationPlugin implements GoPlugin {
     slackNotifier.postMessage(message);
   }
 
-  public Message getMessage(MaterialRevision materialRevision, PluginSettings pluginSettings) {
+  public Message getMessage(PluginSettings pluginSettings, List<MaterialRevision> materialRevisions) {
     Message message = new Message();
     message.setTitle("The Pipeline " + pipelinePath + " is failing.");
     message.setAttachmentTitle(pluginSettings.getServerBaseUrl() + "/go/pipelines/" + pipelinePath);
     message.addField("Pipeline", pipelinePath, true);
     message.addField("Status", "Failed", true);
-    message.addField("Modified Repository", materialRevision.getMaterialDescription(), false);
-    message.addField("Owners", materialRevision.getCommitOwners(), false);
-    message.setChanges(materialRevision.getChanges());
+
+    String description = "";
+    String owners = "";
+    String changes = "";
+    for(MaterialRevision materialRevision : materialRevisions) {
+      description = description.concat(materialRevision.getMaterialDescription());
+      owners = owners.concat(materialRevision.getCommitOwners());
+      changes = changes.concat(materialRevision.getChanges());
+    }
+
+    message.addField("Modified Repository", description, false);
+    message.addField("Owners", owners, false);
+    message.setChanges(changes);
 
     return message;
   }

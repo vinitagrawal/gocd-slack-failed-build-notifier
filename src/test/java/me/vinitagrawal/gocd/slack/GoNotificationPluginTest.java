@@ -175,7 +175,7 @@ public class GoNotificationPluginTest {
     MaterialRevision materialRevision = new Gson().fromJson(revisionJson, MaterialRevision.class);
     setupPluginSettings();
     plugin.setPipelinePath("Droid/12/spec/1");
-    Message message = plugin.getMessage(materialRevision, plugin.getPluginSettings());
+    Message message = plugin.getMessage(plugin.getPluginSettings(), Arrays.asList(materialRevision));
 
     assertThat(message.getTitle(), equalTo("The Pipeline Droid/12/spec/1 is failing."));
     assertThat(message.getAttachmentTitle(), equalTo("http://localhost:8153/go/pipelines/Droid/12/spec/1"));

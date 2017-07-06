@@ -14,6 +14,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.List;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -46,8 +47,10 @@ public class APIClientTest {
 
     PipelineInstance pipelineInstance = apiClient.getPipelineInstance("Droid", 3);
 
-    MaterialRevision materialRevision = pipelineInstance.getBuildCauseRevision();
-    assertThat(materialRevision.getMaterialDescription(), equalTo("\nURL: https://github.com/gocd/gocd, Branch: master"));
-    assertThat(materialRevision.getPipelineRevision(), equalTo("a788f1876e2e1f6e5a1e91006e75cd1d467a0edb"));
+    List<MaterialRevision> materialRevisionList = pipelineInstance.getBuildCauseRevision();
+
+    assertThat(materialRevisionList.size(), equalTo(1));
+    assertThat(materialRevisionList.get(0).getMaterialDescription(), equalTo("\nURL: https://github.com/gocd/gocd, Branch: master"));
+    assertThat(materialRevisionList.get(0).getPipelineRevision(), equalTo("a788f1876e2e1f6e5a1e91006e75cd1d467a0edb"));
   }
 }

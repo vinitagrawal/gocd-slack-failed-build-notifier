@@ -2,6 +2,8 @@ package me.vinitagrawal.gocd.slack.model;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -26,15 +28,24 @@ public class PipelineInstance {
     }
   }
 
-  public MaterialRevision getBuildCauseRevision() {
-    MaterialRevision buildRevision = getChangedMaterialRevision();
-    if(buildRevision == null) {
-      List<MaterialRevision> revisions = buildCause.getRevisions();
-      buildRevision = revisions.get(0);
-      for(int i=1; i<revisions.size(); i++) {
-        if(!isLatestBuildCause(buildRevision, revisions.get(i)))
-          buildRevision = revisions.get(i);
-      }
+  public List<MaterialRevision> getBuildCauseRevision() {
+    List<MaterialRevision> buildRevisionList = getChangedMaterialRevision();
+
+    if(buildRevisionList.isEmpty()) {
+      buildRevisionList = new ArrayList<>();
+      buildRevisionList.add(getModifiedMaterialRevision());
+    }
+
+    return buildRevisionList;
+  }
+
+  private MaterialRevision getModifiedMaterialRevision() {
+    MaterialRevision buildRevision;
+    List<MaterialRevision> revisions = buildCause.getRevisions();
+    buildRevision = revisions.get(0);
+    for(int i=1; i<revisions.size(); i++) {
+      if(!isLatestBuildCause(buildRevision, revisions.get(i)))
+        buildRevision = revisions.get(i);
     }
 
     return buildRevision;
@@ -47,13 +58,17 @@ public class PipelineInstance {
     return latestModifiedTime.after(modifiedTime);
   }
 
-  private MaterialRevision getChangedMaterialRevision() {
+  private List<MaterialRevision> getChangedMaterialRevision() {
+    List<MaterialRevision> materialRevisionList = new ArrayList<>();
     for(MaterialRevision materialRevision : buildCause.getRevisions()) {
       if(materialRevision.isChanged())
-        return materialRevision;
+        materialRevisionList.add(materialRevision);
     }
 
-    return null;
+    if(materialRevisionList.isEmpty())
+      return Collections.emptyList();
+
+    return materialRevisionList;
   }
 
 }

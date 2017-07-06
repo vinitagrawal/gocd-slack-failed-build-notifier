@@ -5,6 +5,8 @@ import me.vinitagrawal.gocd.slack.testUtils.FileUtilities;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.List;
+
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -20,9 +22,9 @@ public class PipelineInstanceTest {
 
   @Test
   public void shouldReturnBuildCauseRevision() throws Exception {
-    MaterialRevision materialRevision = pipelineInstance.getBuildCauseRevision();
+    List<MaterialRevision> materialRevision = pipelineInstance.getBuildCauseRevision();
 
-    assertThat(materialRevision.getPipelineRevision(), equalTo("a788f1876e2e1f6e5a1e91006e75cd1d467a0edb"));
-    assertThat(materialRevision.getMaterialDescription(), equalTo("\nURL: https://github.com/gocd/gocd, Branch: master"));
+    assertThat(materialRevision.get(0).getPipelineRevision(), equalTo("a788f1876e2e1f6e5a1e91006e75cd1d467a0edb"));
+    assertThat(materialRevision.get(0).getMaterialDescription(), equalTo("\nURL: https://github.com/gocd/gocd, Branch: master"));
   }
 }
