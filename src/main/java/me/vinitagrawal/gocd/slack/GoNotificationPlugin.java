@@ -190,7 +190,7 @@ public class GoNotificationPlugin implements GoPlugin {
     message.setAttachmentTitle(pluginSettings.getServerBaseUrl() + "/go/pipelines/" + pipelinePath);
     message.addField("Pipeline", pipelinePath, true);
     message.addField("Status", "Failed", true);
-    message.addField("Repository", materialRevision.getMaterialDescription(), false);
+    message.addField("Modified Repository", materialRevision.getMaterialDescription(), false);
     message.addField("Owners", materialRevision.getCommitOwners(), false);
     message.setChanges(materialRevision.getChanges());
 
