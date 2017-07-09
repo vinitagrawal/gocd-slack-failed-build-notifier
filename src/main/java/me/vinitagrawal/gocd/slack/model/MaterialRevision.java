@@ -2,7 +2,6 @@ package me.vinitagrawal.gocd.slack.model;
 
 import com.google.gson.annotations.SerializedName;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -83,19 +82,14 @@ public class MaterialRevision {
     return recentTime;
   }
 
-  public String getCommitOwners() {
-    List<String> ownerList = new ArrayList<>();
+  public List<String> getCommitOwners(List<String> ownerList) {
     for(Modification modification : getModifications()) {
       if(!isNullOrEmpty(modification.getUserName()) &&
         !ownerList.contains(modification.getUserName()))
         ownerList.add(modification.getUserName());
     }
 
-    String owners = "";
-    for(String owner : ownerList) {
-      owners = owners.concat(owner + "\n");
-    }
-    return owners.trim();
+    return ownerList;
   }
 
   public String getChanges() {

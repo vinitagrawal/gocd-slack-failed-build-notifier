@@ -7,7 +7,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -64,9 +66,10 @@ public class MaterialRevisionTest {
 
   @Test
   public void shouldReturnCommitOwners() throws Exception {
-    String commitOwners = materialRevision.getCommitOwners();
+    List<String> commitOwnerList = materialRevision.getCommitOwners(new ArrayList<String>());
 
-    assertThat(commitOwners, equalTo("Pick E Reader <pick.e.reader@example.com>"));
+    assertThat(commitOwnerList.size(), equalTo(1));
+    assertThat(commitOwnerList.get(0), equalTo("Pick E Reader <pick.e.reader@example.com>"));
   }
 
   @Test

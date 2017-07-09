@@ -195,17 +195,18 @@ public class GoNotificationPlugin implements GoPlugin {
     message.addField("Status", "Failed", true);
 
     String description = "";
-    String owners = "";
     String changes = "";
+    List<String> owners = new ArrayList<>();
     for(MaterialRevision materialRevision : materialRevisions) {
-      description = description.concat(materialRevision.getMaterialDescription());
-      owners = owners.concat(materialRevision.getCommitOwners());
-      changes = changes.concat(materialRevision.getChanges());
+      if(!description.contains(materialRevision.getMaterialDescription()))
+        description = description.concat(materialRevision.getMaterialDescription());
+      changes = changes.concat("\n" + description + "\n" + materialRevision.getChanges());
+      owners = materialRevision.getCommitOwners(owners);
     }
 
     message.addField("Modified Repository", description, false);
-    message.addField("Owners", owners, false);
     message.setChanges(changes);
+    message.setOwnerList(owners);
 
     return message;
   }

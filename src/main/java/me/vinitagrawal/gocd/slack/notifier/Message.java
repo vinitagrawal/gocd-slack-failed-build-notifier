@@ -8,6 +8,7 @@ public class Message {
   private String title;
   private String attachmentTitle;
   private String changes;
+  private List<String> ownerList;
   private List<Field> fields = new ArrayList<>();
 
   public class Field {
@@ -75,12 +76,21 @@ public class Message {
     this.changes = changes;
   }
 
+  public List<String> getOwnerList() {
+    return ownerList;
+  }
+
+  public void setOwnerList(List<String> ownerList) {
+    this.ownerList = ownerList;
+  }
+
   @Override
   public String toString() {
     return "Message{" +
       "title='" + title + '\'' +
       ", attachmentTitle='" + attachmentTitle + '\'' +
       ", changes='" + changes + '\'' +
+      ", ownerList=" + ownerList +
       ", fields=" + fields +
       '}';
   }

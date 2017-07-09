@@ -179,9 +179,10 @@ public class GoNotificationPluginTest {
 
     assertThat(message.getTitle(), equalTo("The Pipeline Droid/12/spec/1 is failing."));
     assertThat(message.getAttachmentTitle(), equalTo("http://localhost:8153/go/pipelines/Droid/12/spec/1"));
-    assertThat(message.getFields().size(), equalTo(4));
+    assertThat(message.getFields().size(), equalTo(3));
 
-    String expectedChanges = "\nSHA : a788f1876e2e1f61e91006e75cd1d467a0edb\nmy hola mundo changes"
+    String expectedChanges = "\n\nURL: https://github.com/gocd/gocd, Branch: master\n"
+      + "\nSHA : a788f1876e2e1f61e91006e75cd1d467a0edb\nmy hola mundo changes"
       + "\nSHA : a788f1876e26e5a1e91006e75cd1d467a0edb\nmy hola mundo changes"
       + "\nSHA : a788f1876e2e1f6e5a1e91006e75cd1d467a0edb\nmy hola mundo changes";
     assertThat(message.getChanges(), equalTo(expectedChanges));

@@ -4,6 +4,8 @@ import com.oracle.tools.packager.Log;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Arrays;
+
 public class SlackNotifierTest {
 
   private SlackNotifier slackNotifier;
@@ -22,6 +24,7 @@ public class SlackNotifierTest {
     message.setTitle("Pipeline Failing");
     message.setAttachmentTitle("pipeline link");
     message.setChanges("Few commits changed");
+    message.setOwnerList(Arrays.asList("Pick E Reader <pick.e.reader@example.com>"));
     message.addField("Status", "Failed", true);
 
     slackNotifier.postMessage(message);
