@@ -13,6 +13,7 @@ import com.thoughtworks.go.plugin.api.request.GoPluginApiRequest;
 import com.thoughtworks.go.plugin.api.response.GoApiResponse;
 import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
 import me.vinitagrawal.gocd.slack.apiclient.APIClient;
+import me.vinitagrawal.gocd.slack.config.PipelineConfiguration;
 import me.vinitagrawal.gocd.slack.model.GoApiRequestBody;
 import me.vinitagrawal.gocd.slack.model.MaterialRevision;
 import me.vinitagrawal.gocd.slack.model.PipelineInstance;
@@ -20,8 +21,11 @@ import me.vinitagrawal.gocd.slack.model.PluginSettings;
 import me.vinitagrawal.gocd.slack.notifier.Message;
 import me.vinitagrawal.gocd.slack.notifier.SlackNotifier;
 import org.apache.commons.io.IOUtils;
+import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.Constructor;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 
 import static java.util.Arrays.asList;
@@ -130,11 +134,11 @@ public class GoNotificationPlugin implements GoPlugin {
     GoApiRequestBody goApiRequestBody = gson.fromJson(goPluginApiRequest.requestBody(), GoApiRequestBody.class);
     Map<String, Object> response = new HashMap<String, Object>();
     PluginSettings pluginSettings = getPluginSettings();
-
     try {
       response.put("status", "success");
-      if (goApiRequestBody.hasStageFailed()) {
-        GoApiRequestBody.Pipeline pipeline = goApiRequestBody.getPipeline();
+      GoApiRequestBody.Pipeline pipeline = goApiRequestBody.getPipeline();
+
+      if (isToBeNotified(pipeline.getName()) && pipeline.hasStageFailed()) {
         setPipelinePath(pipeline.getPath());
         setAPIClient(pluginSettings);
         materialRevisions = new ArrayList<>();
@@ -149,6 +153,14 @@ public class GoNotificationPlugin implements GoPlugin {
     }
 
     return renderJSON(SUCCESS_RESPONSE_CODE, response);
+  }
+
+  private boolean isToBeNotified(String pipelineName) {
+    List<String> pipelineNameList = getPipelineNames();
+    if (pipelineNameList != null)
+      return pipelineNameList.contains(pipelineName);
+
+    return true;
   }
 
   private void setAPIClient(PluginSettings pluginSettings) {
@@ -209,6 +221,13 @@ public class GoNotificationPlugin implements GoPlugin {
     message.setOwnerList(owners);
 
     return message;
+  }
+
+  private List<String> getPipelineNames() {
+    Yaml yaml = new Yaml(new Constructor(PipelineConfiguration.class));
+    InputStream inputStream = getClass().getResourceAsStream("/pipelines.yml");
+    PipelineConfiguration pipelineConfiguration = yaml.loadAs(inputStream, PipelineConfiguration.class);
+    return pipelineConfiguration.getPipelines();
   }
 
   public void setPipelinePath(String path) {

@@ -41,10 +41,11 @@ public class GoApiRequestBody {
     public String getPath() {
       return name + "/" + counter + "/" + stage.getPath();
     }
+
+    public boolean hasStageFailed() {
+      String result = stage.getResult();
+      return result.equals("Failed");
+    }
   }
 
-  public boolean hasStageFailed() {
-    String result = getPipeline().stage.getResult();
-    return result.equals("Failed");
-  }
 }
