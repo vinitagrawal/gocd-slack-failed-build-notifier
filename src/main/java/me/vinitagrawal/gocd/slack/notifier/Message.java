@@ -22,6 +22,15 @@ public class Message {
       this.isValueShort = isValueShort;
     }
 
+    public Field(String title, List<String> valueList, boolean isValueShort) {
+      this.title = title;
+      this.isValueShort = isValueShort;
+
+      for(String value :  valueList) {
+        
+      }
+    }
+
     public String getTitle() {
       return title;
     }
@@ -72,8 +81,20 @@ public class Message {
     return changes;
   }
 
-  public void setChanges(String changes) {
-    this.changes = changes;
+  public void setChanges(List<String> changesList) {
+    changes = convertListToString(changesList);
+  }
+
+  public String getModifiedRepositories(List<String> repositoryList) {
+    return convertListToString(repositoryList);
+  }
+
+  private String convertListToString(List<String> list) {
+    String str = "";
+    for(String item : list) {
+      str = str.concat(item + "\n");
+    }
+    return str.trim();
   }
 
   public List<String> getOwnerList() {

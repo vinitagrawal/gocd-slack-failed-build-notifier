@@ -23,7 +23,7 @@ public class SlackNotifierTest {
     Message message = new Message();
     message.setTitle("Pipeline Failing");
     message.setAttachmentTitle("pipeline link");
-    message.setChanges("Few commits changed");
+    message.setChanges(Arrays.asList("Few commits changed"));
     message.setOwnerList(Arrays.asList("Pick E Reader <pick.e.reader@example.com>"));
     message.addField("Status", "Failed", true);
 

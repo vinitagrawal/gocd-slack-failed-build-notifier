@@ -74,11 +74,8 @@ public class MaterialRevisionTest {
 
   @Test
   public void shouldReturnMaterialChanges() throws Exception {
-    String changes = materialRevision.getChanges();
+    List<String> changes = materialRevision.getMaterialChanges();
 
-    String expected = "\nSHA : a788f1876e2e1f61e91006e75cd1d467a0edb\nmy hola mundo changes"
-      + "\nSHA : a788f1876e26e5a1e91006e75cd1d467a0edb\nmy hola mundo changes"
-      + "\nSHA : a788f1876e2e1f6e5a1e91006e75cd1d467a0edb\nmy hola mundo changes";
-    assertThat(changes, equalTo(expected));
+    assertThat(changes.size(), equalTo(3));
   }
 }

@@ -173,9 +173,18 @@ public class GoNotificationPlugin implements GoPlugin {
 
         determineFailingCommit(pipelineName, pipelineCounter);
       } else if (materialRevision.isBuildCauseTypeGit()) {
-        materialRevisions.add(materialRevision);
+        if(!isMaterialPresent(materialRevision.getMaterialFingerprint()))
+          materialRevisions.add(materialRevision);
       }
     }
+  }
+
+  private boolean isMaterialPresent(String fingerprint) {
+    for(MaterialRevision materialRevision : materialRevisions) {
+      if(materialRevision.getMaterialFingerprint().equals(fingerprint))
+        return true;
+    }
+    return false;
   }
 
   private void postMessageToSlack(PluginSettings pluginSettings, Message message) {
@@ -194,17 +203,19 @@ public class GoNotificationPlugin implements GoPlugin {
     message.addField("Pipeline", pipelinePath, true);
     message.addField("Status", "Failed", true);
 
-    String description = "";
-    String changes = "";
+    List<String> repositoryList = new ArrayList<>();
+    List<String> changes = new ArrayList<>();
     List<String> owners = new ArrayList<>();
     for(MaterialRevision materialRevision : materialRevisions) {
-      if(!description.contains(materialRevision.getMaterialDescription()))
-        description = description.concat(materialRevision.getMaterialDescription());
-      changes = changes.concat("\n" + description + "\n" + materialRevision.getChanges());
+      if(!repositoryList.contains(materialRevision.getMaterialDescription())) {
+        repositoryList.add(materialRevision.getMaterialDescription());
+        changes.add("\n" + materialRevision.getMaterialDescription());
+      }
+      changes.addAll(materialRevision.getMaterialChanges());
       owners = materialRevision.getCommitOwners(owners);
     }
 
-    message.addField("Modified Repository", description, false);
+    message.addField("Modified Repository", message.getModifiedRepositories(repositoryList), false);
     message.setChanges(changes);
     message.setOwnerList(owners);
 
