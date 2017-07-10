@@ -2,6 +2,7 @@ package me.vinitagrawal.gocd.slack.model;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +34,10 @@ public class MaterialRevision {
 
   public String getMaterialDescription() {
     return "\n" + getMaterial().get("description").toString();
+  }
+
+  public String getMaterialFingerprint() {
+    return getMaterial().get("fingerprint").toString();
   }
 
   public boolean isBuildCauseTypePipeline() {
@@ -92,10 +97,10 @@ public class MaterialRevision {
     return ownerList;
   }
 
-  public String getChanges() {
-    String changes = "";
+  public List<String> getMaterialChanges() {
+    List<String> changes = new ArrayList<>();
     for(Modification modification : getModifications()) {
-      changes = changes.concat(modification.getMessage());
+      changes.add(modification.getMessage());
     }
 
     return changes;
