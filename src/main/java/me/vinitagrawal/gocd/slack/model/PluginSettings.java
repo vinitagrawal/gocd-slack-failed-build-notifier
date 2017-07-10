@@ -2,6 +2,10 @@ package me.vinitagrawal.gocd.slack.model;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 public class PluginSettings {
 
   @SerializedName("server_base_url")
@@ -16,6 +20,8 @@ public class PluginSettings {
   private String slackChannelName;
   @SerializedName("slack_bot_name")
   private String slackBotName;
+  @SerializedName("pipeline_names")
+  private String pipelineNames;
 
   public String getServerBaseUrl() {
     return serverBaseUrl;
@@ -39,5 +45,12 @@ public class PluginSettings {
 
   public String getSlackBotName() {
     return slackBotName;
+  }
+
+  public List<String> getPipelineNames() {
+    if (pipelineNames != null)
+      return Arrays.asList(pipelineNames.split("\\s*,\\s*"));
+
+    return Collections.emptyList();
   }
 }

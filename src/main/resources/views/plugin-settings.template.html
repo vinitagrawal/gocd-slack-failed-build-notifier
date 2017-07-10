@@ -5,6 +5,10 @@
     fieldset > label {
         font-weight: bold;
     }
+    .description {
+        font-size: 11px;
+        font-style: italic;
+    }
 </style>
 <div class="form_item_block">
     <label>Server Base URL:<span class="asterisk">*</span></label>
@@ -19,6 +23,11 @@
 <div class="form_item_block">
     <label>Server API Password:</label>
     <input type="password" ng-model="server_api_password" ng-required="false"/>
+    <span class="form_error" ng-show="GOINPUTNAME[server_api_password].$error.server">{{ GOINPUTNAME[server_api_password].$error.server }}</span>
+</div>
+<div class="form_item_block">
+    <label>Whitelist Pipeline Names:<br/><span class="description">Enter pipeline names separated by commas(,)</span></label>
+    <input type="text" ng-model="pipeline_names" ng-required="false"/>
     <span class="form_error" ng-show="GOINPUTNAME[server_api_password].$error.server">{{ GOINPUTNAME[server_api_password].$error.server }}</span>
 </div>
 <fieldset class="form-item-block">
