@@ -26,6 +26,7 @@ public class SlackNotifierTest {
     message.setChanges(Arrays.asList("Few commits changed"));
     message.setOwnerList(Arrays.asList("Pick E Reader <pick.e.reader@example.com>"));
     message.addField("Status", "Failed", true);
+    message.setMinimalisticCheckEnabled(false);
 
     slackNotifier.postMessage(message);
   }

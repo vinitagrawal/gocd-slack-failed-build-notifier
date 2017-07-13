@@ -29,6 +29,39 @@ public class SlackNotifier {
   }
 
   public void postMessage(Message message) {
+    if(message.isMinimalisticCheckEnabled()) {
+      postMinimalisticMessage(message);
+    }
+    else {
+      postDetailedMessage(message);
+    }
+
+  }
+
+  private void postMinimalisticMessage(Message message) {
+    try {
+      Attachment attachment = Attachment.builder()
+        .text("Failing: " + message.getAttachmentTitle() +
+          "\nOwners: " + getOwners(message.getOwnerList()) +
+          "\n" + message.getChanges())
+        .color("#F44336")
+        .build();
+
+      slack.methods().chatPostMessage(
+        ChatPostMessageRequest.builder()
+          .token(token)
+          .channel(channelName)
+          .username(userName)
+          .attachments(Arrays.asList(attachment))
+          .build()
+      );
+
+    } catch (IOException | SlackApiException e) {
+      e.printStackTrace();
+    }
+  }
+
+  private void postDetailedMessage(Message message) {
     try {
       Attachment attachment = Attachment.builder()
         .title(message.getAttachmentTitle())
@@ -36,7 +69,7 @@ public class SlackNotifier {
         .color("#F44336")
         .build();
 
-      for(Message.Field messageField : message.getFields()) {
+      for (Message.Field messageField : message.getFields()) {
         Field field = Field.builder()
           .title(messageField.getTitle())
           .value(messageField.getValue())
@@ -83,9 +116,9 @@ public class SlackNotifier {
     for (String owner : ownerList) {
       String slackUser = detectSlackUser(getEmail(owner));
       if(slackUser != null)
-        owners = owners.concat("<@" + slackUser + ">\n");
+        owners = owners.concat("<@" + slackUser + "> ");
       else
-        owners = owners.concat(owner + "\n");
+        owners = owners.concat(owner + " ");
     }
 
     return owners.trim();

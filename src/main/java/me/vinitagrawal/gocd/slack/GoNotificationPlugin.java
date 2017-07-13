@@ -84,6 +84,7 @@ public class GoNotificationPlugin implements GoPlugin {
     response.put("server_base_url", createField("Server Base URL", null, true, false, "0"));
     response.put("server_api_username", createField("Server API Username", null, false, false, "0"));
     response.put("server_api_password", createField("Server API Password", null, false, true, "0"));
+    response.put("is_minimalistic", createField("Minimalistic Text", "false", false, false, "0"));
     response.put("pipeline_names", createField("Pipeline Names", null, false, false, "0"));
     response.put("slack_oauth_token", createField("Slack OAuth Token", null, false, false, "0"));
     response.put("slack_channel", createField("Slack Channel", null, false, false, "0"));
@@ -227,6 +228,7 @@ public class GoNotificationPlugin implements GoPlugin {
     message.addField("Modified Repository", message.getModifiedRepositories(repositoryList), false);
     message.setChanges(changes);
     message.setOwnerList(owners);
+    message.setMinimalisticCheckEnabled(pluginSettings.isMinimalisticCheckEnabled());
 
     return message;
   }

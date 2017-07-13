@@ -203,7 +203,7 @@ public class GoNotificationPluginTest {
       @Override
       public String responseBody() {
         return "{\"server_base_url\":\"http://localhost:8153\",\"server_api_password\":\"password\"," +
-          "\"server_api_username\":\"username\",\"pipeline_names\":\"Droid,mocks\"}";
+          "\"server_api_username\":\"username\",\"pipeline_names\":\"Droid,mocks\",\"is_minimalistic\":\"false\"}";
       }
     };
   }

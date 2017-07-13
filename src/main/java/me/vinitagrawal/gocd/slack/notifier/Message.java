@@ -10,6 +10,7 @@ public class Message {
   private String changes;
   private List<String> ownerList;
   private List<Field> fields = new ArrayList<>();
+  private boolean isMinimalisticCheckEnabled;
 
   public class Field {
     private String title;
@@ -41,15 +42,6 @@ public class Message {
 
     public boolean isValueShort() {
       return isValueShort;
-    }
-
-    @Override
-    public String toString() {
-      return "Field{" +
-        "title='" + title + '\'' +
-        ", value='" + value + '\'' +
-        ", isValueShort=" + isValueShort +
-        '}';
     }
   }
 
@@ -105,14 +97,11 @@ public class Message {
     this.ownerList = ownerList;
   }
 
-  @Override
-  public String toString() {
-    return "Message{" +
-      "title='" + title + '\'' +
-      ", attachmentTitle='" + attachmentTitle + '\'' +
-      ", changes='" + changes + '\'' +
-      ", ownerList=" + ownerList +
-      ", fields=" + fields +
-      '}';
+  public boolean isMinimalisticCheckEnabled() {
+    return isMinimalisticCheckEnabled;
+  }
+
+  public void setMinimalisticCheckEnabled(boolean minimalisticCheckEnabled) {
+    isMinimalisticCheckEnabled = minimalisticCheckEnabled;
   }
 }

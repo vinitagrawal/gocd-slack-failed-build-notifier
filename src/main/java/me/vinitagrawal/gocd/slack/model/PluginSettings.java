@@ -22,6 +22,8 @@ public class PluginSettings {
   private String slackBotName;
   @SerializedName("pipeline_names")
   private String pipelineNames;
+  @SerializedName("is_minimalistic")
+  private String isMinimalisticCheckEnabled;
 
   public String getServerBaseUrl() {
     return serverBaseUrl;
@@ -52,5 +54,12 @@ public class PluginSettings {
       return Arrays.asList(pipelineNames.split("\\s*,\\s*"));
 
     return Collections.emptyList();
+  }
+
+  public boolean isMinimalisticCheckEnabled() {
+    if (isMinimalisticCheckEnabled != null)
+      return isMinimalisticCheckEnabled.equalsIgnoreCase("on");
+
+    return false;
   }
 }
