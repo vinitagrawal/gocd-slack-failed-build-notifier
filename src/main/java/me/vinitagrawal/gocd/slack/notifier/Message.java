@@ -97,7 +97,7 @@ public class Message {
     this.ownerList = ownerList;
   }
 
-  public boolean isMinimalisticCheckEnabled() {
+  public boolean shouldPostMinimalisticMessage() {
     return isMinimalisticCheckEnabled;
   }
 

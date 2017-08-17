@@ -29,7 +29,7 @@ public class SlackNotifier {
   }
 
   public void postMessage(Message message) {
-    if(message.isMinimalisticCheckEnabled()) {
+    if(message.shouldPostMinimalisticMessage()) {
       postMinimalisticMessage(message);
     }
     else {
@@ -39,60 +39,35 @@ public class SlackNotifier {
   }
 
   private void postMinimalisticMessage(Message message) {
-    try {
-      Attachment attachment = Attachment.builder()
-        .text("Failing: " + message.getAttachmentTitle() +
-          "\nOwners: " + getOwners(message.getOwnerList()) +
-          "\n" + message.getChanges())
-        .color("#F44336")
-        .build();
+    Attachment attachment = Attachment.builder()
+      .text("Failing: " + message.getPipelineURL() +
+        "\nOwners: " + getOwners(message.getOwnerList()) +
+        "\n" + message.getChanges())
+      .color("#F44336")
+      .build();
 
-      slack.methods().chatPostMessage(
-        ChatPostMessageRequest.builder()
-          .token(token)
-          .channel(channelName)
-          .username(userName)
-          .attachments(Arrays.asList(attachment))
-          .build()
-      );
-
-    } catch (IOException | SlackApiException e) {
-      e.printStackTrace();
-    }
+    post(null, Arrays.asList(attachment));
   }
 
   private void postDetailedMessage(Message message) {
-    try {
-      Attachment attachment = Attachment.builder()
-        .title(message.getAttachmentTitle())
-        .fields(new ArrayList<Field>())
-        .color("#F44336")
+    Attachment attachment = Attachment.builder()
+      .title(message.getPipelineURL())
+      .fields(new ArrayList<Field>())
+      .color("#F44336")
+      .build();
+
+    for (Message.Field messageField : message.getFields()) {
+      Field field = Field.builder()
+        .title(messageField.getTitle())
+        .value(messageField.getValue())
+        .valueShortEnough(messageField.isValueShort())
         .build();
-
-      for (Message.Field messageField : message.getFields()) {
-        Field field = Field.builder()
-          .title(messageField.getTitle())
-          .value(messageField.getValue())
-          .valueShortEnough(messageField.isValueShort())
-          .build();
-        attachment.getFields().add(field);
-      }
-
-      attachment.getFields().add(getOwnersField(message));
-
-      slack.methods().chatPostMessage(
-        ChatPostMessageRequest.builder()
-          .token(token)
-          .channel(channelName)
-          .text(message.getTitle())
-          .username(userName)
-          .attachments(Arrays.asList(attachment, getChangesAttachment(message)))
-          .build()
-      );
-
-    } catch (IOException | SlackApiException e) {
-      e.printStackTrace();
+      attachment.getFields().add(field);
     }
+
+    attachment.getFields().add(getOwnersField(message));
+
+    post(message.getText(), Arrays.asList(attachment, getChangesAttachment(message)));
   }
 
   private Attachment getChangesAttachment(Message message) {
@@ -114,7 +89,7 @@ public class SlackNotifier {
   private String getOwners(List<String> ownerList) {
     String owners = "";
     for (String owner : ownerList) {
-      String slackUser = detectSlackUser(getEmail(owner));
+      String slackUser = getSlackUser(getEmail(owner));
       if(slackUser != null)
         owners = owners.concat("<@" + slackUser + "> ");
       else
@@ -128,7 +103,7 @@ public class SlackNotifier {
     return owner.substring(owner.indexOf("<") + 1, owner.indexOf(">"));
   }
 
-  private String detectSlackUser(String userEmail) {
+  private String getSlackUser(String userEmail) {
     try {
       UsersListResponse usersListResponse = slack.methods().usersList(UsersListRequest.builder().token(token).build());
       for(User user : usersListResponse.getMembers())
@@ -141,4 +116,21 @@ public class SlackNotifier {
 
     return null;
   }
+
+  private void post(String text, List<Attachment> attachments) {
+    try {
+      slack.methods().chatPostMessage(
+        ChatPostMessageRequest.builder()
+          .token(token)
+          .channel(channelName)
+          .text(text)
+          .username(userName)
+          .attachments(attachments)
+          .build()
+      );
+    } catch (IOException | SlackApiException e) {
+      e.printStackTrace();
+    }
+  }
+
 }
