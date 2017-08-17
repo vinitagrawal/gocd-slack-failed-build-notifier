@@ -177,8 +177,8 @@ public class GoNotificationPluginTest {
     plugin.setPipelinePath("Droid/12/spec/1");
     Message message = plugin.getMessage(plugin.getPluginSettings(), Arrays.asList(materialRevision));
 
-    assertThat(message.getTitle(), equalTo("The Pipeline Droid/12/spec/1 is failing."));
-    assertThat(message.getAttachmentTitle(), equalTo("http://localhost:8153/go/pipelines/Droid/12/spec/1"));
+    assertThat(message.getText(), equalTo("The Pipeline Droid/12/spec/1 is failing."));
+    assertThat(message.getPipelineURL(), equalTo("http://localhost:8153/go/pipelines/Droid/12/spec/1"));
     assertThat(message.getFields().size(), equalTo(3));
 
     String expectedChanges = "URL: https://github.com/gocd/gocd, Branch: master\n"

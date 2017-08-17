@@ -21,8 +21,8 @@ public class SlackNotifierTest {
   @Test
   public void shouldPostMessageOnSlack() throws Exception {
     Message message = new Message();
-    message.setTitle("Pipeline Failing");
-    message.setAttachmentTitle("pipeline link");
+    message.setText("Pipeline Failing");
+    message.setPipelineURL("pipeline link");
     message.setChanges(Arrays.asList("Few commits changed"));
     message.setOwnerList(Arrays.asList("Pick E Reader <pick.e.reader@example.com>"));
     message.addField("Status", "Failed", true);

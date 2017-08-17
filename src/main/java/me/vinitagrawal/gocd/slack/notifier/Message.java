@@ -5,8 +5,8 @@ import java.util.List;
 
 public class Message {
 
-  private String title;
-  private String attachmentTitle;
+  private String text;
+  private String pipelineURL;
   private String changes;
   private List<String> ownerList;
   private List<Field> fields = new ArrayList<>();
@@ -53,20 +53,20 @@ public class Message {
     return fields;
   }
 
-  public String getTitle() {
-    return title;
+  public String getText() {
+    return text;
   }
 
-  public void setTitle(String title) {
-    this.title = title;
+  public void setText(String text) {
+    this.text = text;
   }
 
-  public String getAttachmentTitle() {
-    return attachmentTitle;
+  public String getPipelineURL() {
+    return pipelineURL;
   }
 
-  public void setAttachmentTitle(String attachmentTitle) {
-    this.attachmentTitle = attachmentTitle;
+  public void setPipelineURL(String pipelineURL) {
+    this.pipelineURL = pipelineURL;
   }
 
   public String getChanges() {

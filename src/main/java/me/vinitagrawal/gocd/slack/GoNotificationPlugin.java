@@ -208,8 +208,8 @@ public class GoNotificationPlugin implements GoPlugin {
 
   public Message getMessage(PluginSettings pluginSettings, List<MaterialRevision> materialRevisions) {
     Message message = new Message();
-    message.setTitle("The Pipeline " + pipelinePath + " is failing.");
-    message.setAttachmentTitle(pluginSettings.getServerBaseUrl() + "/go/pipelines/" + pipelinePath);
+    message.setText("The Pipeline " + pipelinePath + " is failing.");
+    message.setPipelineURL(pluginSettings.getServerBaseUrl() + "/go/pipelines/" + pipelinePath);
     message.addField("Pipeline", pipelinePath, true);
     message.addField("Status", "Failed", true);
 
