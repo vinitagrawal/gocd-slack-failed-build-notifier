@@ -7,11 +7,22 @@ public class Stage {
   @SerializedName("name")
   private String name;
 
+  @SerializedName("state")
+  private String state;
+
   @SerializedName("result")
   private String result;
 
   @SerializedName("counter")
   private int counter;
+
+  public String getName() {
+    return name;
+  }
+
+  public String getState() {
+    return state;
+  }
 
   public String getResult() {
     return result;

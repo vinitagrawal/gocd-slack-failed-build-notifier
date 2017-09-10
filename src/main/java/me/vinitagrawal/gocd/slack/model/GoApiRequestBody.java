@@ -44,7 +44,20 @@ public class GoApiRequestBody {
 
     public boolean hasStageFailed() {
       String result = stage.getResult();
-      return result.equals("Failed");
+      return result.equalsIgnoreCase("Failed");
+    }
+
+    public boolean isStageCompleted() {
+      String state = stage.getState();
+      return !state.equalsIgnoreCase("Building");
+    }
+
+    public Stage getStage() {
+      return stage;
+    }
+
+    public String getPassedStage() {
+      return String.format("%s : %s", getName(), getStage().getName());
     }
   }
 

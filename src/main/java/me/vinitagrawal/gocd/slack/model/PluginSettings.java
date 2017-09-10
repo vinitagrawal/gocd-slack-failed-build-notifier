@@ -64,4 +64,11 @@ public class PluginSettings {
 
     return false;
   }
+
+  public boolean isStateChangeCheckEnabled() {
+    if (isStateChangeCheckEnabled != null)
+      return isStateChangeCheckEnabled.equalsIgnoreCase("on");
+
+    return false;
+  }
 }

@@ -11,6 +11,7 @@ public class Message {
   private List<String> ownerList;
   private List<Field> fields = new ArrayList<>();
   private boolean isMinimalisticCheckEnabled;
+  private boolean hasPassed;
 
   public class Field {
     private String title;
@@ -103,5 +104,13 @@ public class Message {
 
   public void setMinimalisticCheckEnabled(boolean minimalisticCheckEnabled) {
     isMinimalisticCheckEnabled = minimalisticCheckEnabled;
+  }
+
+  public boolean shouldPostPassedMessage() {
+    return hasPassed;
+  }
+
+  public void setHasPassed(boolean hasPassed) {
+    this.hasPassed = hasPassed;
   }
 }

@@ -22,6 +22,8 @@ public class SlackNotifier {
   private String token;
   private String channelName;
   private String userName;
+  private static final String PASSED_GREEN_COLOR = "#4CAF50";
+  private static final String FAILED_RED_COLOR = "#F44336";
 
   public SlackNotifier(String token, String channelName, String userName) {
     this.token = token;
@@ -30,13 +32,25 @@ public class SlackNotifier {
   }
 
   public void postMessage(Message message) {
-    if(message.shouldPostMinimalisticMessage()) {
-      postMinimalisticMessage(message);
-    }
+    if (message.shouldPostPassedMessage())
+      postPassedMessage(message);
     else {
-      postDetailedMessage(message);
+      if (message.shouldPostMinimalisticMessage()) {
+        postMinimalisticMessage(message);
+      } else {
+        postDetailedMessage(message);
+      }
     }
 
+  }
+
+  private void postPassedMessage(Message message) {
+    Attachment attachment = Attachment.builder()
+      .text(message.getText())
+      .color(PASSED_GREEN_COLOR)
+      .build();
+
+    post(null, Arrays.asList(attachment));
   }
 
   private void postMinimalisticMessage(Message message) {
@@ -44,7 +58,7 @@ public class SlackNotifier {
       .text("Failing: " + message.getPipelineURL() +
         "\nOwners: " + getOwners(message.getOwnerList()) +
         "\n" + message.getChanges())
-      .color("#F44336")
+      .color(FAILED_RED_COLOR)
       .build();
 
     post(null, Arrays.asList(attachment));
@@ -54,7 +68,7 @@ public class SlackNotifier {
     Attachment attachment = Attachment.builder()
       .title(message.getPipelineURL())
       .fields(new ArrayList<Field>())
-      .color("#F44336")
+      .color(FAILED_RED_COLOR)
       .build();
 
     for (Message.Field messageField : message.getFields()) {

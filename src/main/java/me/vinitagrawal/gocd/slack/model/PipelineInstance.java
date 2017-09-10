@@ -71,4 +71,18 @@ public class PipelineInstance {
     return materialRevisionList;
   }
 
+  public boolean hasStateChanged(Stage currentStage) {
+    for (Stage stage : stages) {
+      try {
+        if (stage.getName().equals(currentStage.getName()) &&
+          ((stage.getResult() == null && currentStage.getResult().equalsIgnoreCase("Failed")) ||
+            !stage.getResult().equalsIgnoreCase(currentStage.getResult())))
+          return true;
+      } catch (NullPointerException e) {
+        return false;
+      }
+    }
+
+    return false;
+  }
 }

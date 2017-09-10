@@ -136,16 +136,14 @@ public class GoNotificationPlugin implements GoPlugin {
 
     try {
       response.put("status", "success");
+      setAPIClient(pluginSettings);
       GoApiRequestBody.Pipeline pipeline = goApiRequestBody.getPipeline();
-      if (isToBeNotified(pipeline.getName(), pluginSettings) && pipeline.hasStageFailed()) {
-        setPipelinePath(pipeline.getPath());
-        setAPIClient(pluginSettings);
-        materialRevisions = new ArrayList<>();
-        determineFailingCommit(pipeline.getName(), pipeline.getCounter());
-        Message message = getMessage(pluginSettings, materialRevisions);
-        postMessageToSlack(pluginSettings, message);
+      if (toBeNotified(pipeline, pluginSettings)) {
+        if (pipeline.hasStageFailed())
+          postFailedMessage(pluginSettings, pipeline);
+        else
+          postPassedMessage(pluginSettings, pipeline);
       }
-
     } catch (Exception e) {
       response.put("status", "failure");
       response.put("messages", e.getMessage());
@@ -154,12 +152,38 @@ public class GoNotificationPlugin implements GoPlugin {
     return renderJSON(SUCCESS_RESPONSE_CODE, response);
   }
 
-  private boolean isToBeNotified(String pipelineName, PluginSettings pluginSettings) {
-    List<String> pipelineNameList = pluginSettings.getPipelineNames();
-    if (!pipelineNameList.isEmpty())
-      return pipelineNameList.contains(pipelineName);
+  private void postPassedMessage(PluginSettings pluginSettings, GoApiRequestBody.Pipeline pipeline) {
+    postMessageToSlack(pluginSettings, createPassedMessage(pipeline.getPassedStage()));
+  }
 
-    return true;
+  private void postFailedMessage(PluginSettings pluginSettings, GoApiRequestBody.Pipeline pipeline) {
+    setPipelinePath(pipeline.getPath());
+    materialRevisions = new ArrayList<>();
+    determineFailingCommit(pipeline.getName(), pipeline.getCounter());
+    Message message = createFailedMessage(pluginSettings, materialRevisions);
+    postMessageToSlack(pluginSettings, message);
+  }
+
+  private boolean toBeNotified(GoApiRequestBody.Pipeline pipeline, PluginSettings pluginSettings) {
+    List<String> pipelineNameList = pluginSettings.getPipelineNames();
+    if (pipelineNameList.isEmpty()) {
+      return pipeline.isStageCompleted();
+    }
+
+    if (pipelineNameList.contains(pipeline.getName()) && pipeline.isStageCompleted()) {
+      if (pluginSettings.isStateChangeCheckEnabled())
+        return hasPipelineStateChanged(pipeline);
+
+      if (pipeline.hasStageFailed())
+        return true;
+    }
+
+    return false;
+  }
+
+  private boolean hasPipelineStateChanged(GoApiRequestBody.Pipeline pipeline) {
+    PipelineInstance pipelineInstance = apiClient.getPipelineInstance(pipeline.getName(), pipeline.getCounter()-1);
+    return pipelineInstance.hasStateChanged(pipeline.getStage());
   }
 
   private void setAPIClient(PluginSettings pluginSettings) {
@@ -207,10 +231,10 @@ public class GoNotificationPlugin implements GoPlugin {
     slackNotifier.postMessage(message);
   }
 
-  public Message getMessage(PluginSettings pluginSettings, List<MaterialRevision> materialRevisions) {
+  public Message createFailedMessage(PluginSettings pluginSettings, List<MaterialRevision> materialRevisions) {
     Message message = new Message();
-    message.setText("The Pipeline " + pipelinePath + " is failing.");
-    message.setPipelineURL(pluginSettings.getServerBaseUrl() + "/go/pipelines/" + pipelinePath);
+    message.setText(String.format("The Pipeline %s is failing.", pipelinePath));
+    message.setPipelineURL(String.format("%s/go/pipelines/%s", pluginSettings.getServerBaseUrl(), pipelinePath));
     message.addField("Pipeline", pipelinePath, true);
     message.addField("Status", "Failed", true);
 
@@ -231,6 +255,13 @@ public class GoNotificationPlugin implements GoPlugin {
     message.setOwnerList(owners);
     message.setMinimalisticCheckEnabled(pluginSettings.isMinimalisticCheckEnabled());
 
+    return message;
+  }
+
+  private Message createPassedMessage(String passedStage) {
+    Message message = new Message();
+    message.setText(String.format("%s is green now!", passedStage));
+    message.setHasPassed(true);
     return message;
   }
 

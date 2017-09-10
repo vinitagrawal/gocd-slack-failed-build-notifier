@@ -45,8 +45,8 @@
       "counter": "1",
       "approval-type": "success",
       "approved-by": "changes",
-      "state": "Failed",
-      "result": "Failed",
+      "state": "Passed",
+      "result": "Passed",
       "create-time": "2017-06-20T11:50:32.878Z",
       "last-transition-time": "",
       "jobs": [
