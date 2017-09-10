@@ -12,6 +12,7 @@ import com.github.seratch.jslack.api.model.User;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class SlackNotifier {
@@ -88,11 +89,19 @@ public class SlackNotifier {
 
   private String getOwners(List<String> ownerList) {
     String owners = "";
+    List<User> slackUsers = getSlackUsers();
+
     for (String owner : ownerList) {
-      String slackUser = getSlackUser(getEmail(owner));
-      if(slackUser != null)
-        owners = owners.concat("<@" + slackUser + "> ");
-      else
+      boolean isSlackEmail = false;
+      for (User user : slackUsers) {
+        String userEmail = user.getProfile().getEmail();
+        if (userEmail != null && userEmail.equalsIgnoreCase(getEmail(owner))) {
+          owners = owners.concat("<@" + user.getName() + "> ");
+          isSlackEmail = true;
+          break;
+        }
+      }
+      if (!isSlackEmail)
         owners = owners.concat(owner + " ");
     }
 
@@ -103,18 +112,15 @@ public class SlackNotifier {
     return owner.substring(owner.indexOf("<") + 1, owner.indexOf(">"));
   }
 
-  private String getSlackUser(String userEmail) {
+  private List<User> getSlackUsers() {
     try {
       UsersListResponse usersListResponse = slack.methods().usersList(UsersListRequest.builder().token(token).build());
-      for(User user : usersListResponse.getMembers())
-        if(user.getProfile().getEmail().equalsIgnoreCase(userEmail)) {
-          return user.getName();
-        }
+      return usersListResponse.getMembers();
     } catch (IOException | SlackApiException | NullPointerException e) {
       e.printStackTrace();
     }
 
-    return null;
+    return Collections.EMPTY_LIST;
   }
 
   private void post(String text, List<Attachment> attachments) {
