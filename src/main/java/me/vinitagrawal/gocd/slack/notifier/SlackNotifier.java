@@ -110,7 +110,7 @@ public class SlackNotifier {
       for (User user : slackUsers) {
         String userEmail = user.getProfile().getEmail();
         if (userEmail != null && userEmail.equalsIgnoreCase(getEmail(owner))) {
-          owners = owners.concat("<@" + user.getName() + "> ");
+          owners = owners.concat("<@" + user.getId() + "> ");
           isSlackEmail = true;
           break;
         }
