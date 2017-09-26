@@ -13,10 +13,7 @@ import com.thoughtworks.go.plugin.api.request.GoPluginApiRequest;
 import com.thoughtworks.go.plugin.api.response.GoApiResponse;
 import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
 import me.vinitagrawal.gocd.slack.apiclient.APIClient;
-import me.vinitagrawal.gocd.slack.model.GoApiRequestBody;
-import me.vinitagrawal.gocd.slack.model.MaterialRevision;
-import me.vinitagrawal.gocd.slack.model.PipelineInstance;
-import me.vinitagrawal.gocd.slack.model.PluginSettings;
+import me.vinitagrawal.gocd.slack.model.*;
 import me.vinitagrawal.gocd.slack.notifier.Message;
 import me.vinitagrawal.gocd.slack.notifier.SlackNotifier;
 import org.apache.commons.io.IOUtils;
@@ -159,7 +156,7 @@ public class GoNotificationPlugin implements GoPlugin {
   private void postFailedMessage(PluginSettings pluginSettings, GoApiRequestBody.Pipeline pipeline) {
     setPipelinePath(pipeline.getPath());
     materialRevisions = new ArrayList<>();
-    determineFailingCommit(pipeline.getName(), pipeline.getCounter());
+    determineFailingPipeline(pipeline.getName(), pipeline.getCounter(), pipeline.getStage());
     Message message = createFailedMessage(pluginSettings, materialRevisions);
     postMessageToSlack(pluginSettings, message);
   }
@@ -192,6 +189,14 @@ public class GoNotificationPlugin implements GoPlugin {
       pluginSettings.getServerApiUsername(),
       pluginSettings.getServerApiPassword()
     );
+  }
+
+  private void determineFailingPipeline(String pipelineName, int pipelineCounter, Stage stage) {
+    PipelineInstance pipelineInstance = apiClient.getPipelineInstance(pipelineName, pipelineCounter-1);
+    if (pipelineInstance.hasStageFailed(stage))
+      determineFailingPipeline(pipelineName, pipelineCounter-1, stage);
+    else
+      determineFailingCommit(pipelineName, pipelineCounter);
   }
 
   private void determineFailingCommit(String pipelineName, int pipelineCounter) {

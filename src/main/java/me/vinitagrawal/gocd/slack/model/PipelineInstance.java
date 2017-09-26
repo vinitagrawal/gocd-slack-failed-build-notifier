@@ -28,6 +28,15 @@ public class PipelineInstance {
     }
   }
 
+  public boolean hasStageFailed(Stage currentStage) {
+    for (Stage stage : stages) {
+      if (stage.getName().equalsIgnoreCase(currentStage.getName()) &&
+        stage.getResult().equalsIgnoreCase("Failed"))
+        return true;
+    }
+    return false;
+  }
+
   public List<MaterialRevision> getBuildCauseRevision() {
     List<MaterialRevision> buildRevisionList = getChangedMaterialRevision();
 
