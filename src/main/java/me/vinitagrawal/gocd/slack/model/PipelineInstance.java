@@ -31,7 +31,7 @@ public class PipelineInstance {
   public boolean hasStageFailed(Stage currentStage) {
     for (Stage stage : stages) {
       if (stage.getName().equalsIgnoreCase(currentStage.getName()) &&
-        stage.getResult().equalsIgnoreCase("Failed"))
+        stage.isFailed())
         return true;
     }
     return false;
@@ -83,12 +83,14 @@ public class PipelineInstance {
   public boolean hasStateChanged(Stage currentStage) {
     for (Stage stage : stages) {
       try {
-        if (stage.getName().equals(currentStage.getName()) &&
-          ((stage.getResult() == null && currentStage.getResult().equalsIgnoreCase("Failed")) ||
-            !stage.getResult().equalsIgnoreCase(currentStage.getResult())))
-          return true;
+        if (stage.getName().equals(currentStage.getName()))
+          if (stage.isCancelled() && currentStage.isFailed())
+              return true;
+          else if (!stage.getResult().equalsIgnoreCase(currentStage.getResult()))
+              return true;
       } catch (NullPointerException e) {
-        return false;
+        if (currentStage.isFailed())
+          return true;
       }
     }
 

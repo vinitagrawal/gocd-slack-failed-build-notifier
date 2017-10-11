@@ -20,16 +20,24 @@ public class Stage {
     return name;
   }
 
-  public String getState() {
-    return state;
-  }
-
   public String getResult() {
     return result;
   }
 
   public String getPath() {
     return name + "/" + counter;
+  }
+
+  public boolean isFailed() {
+    return getResult().equalsIgnoreCase("Failed");
+  }
+
+  public boolean isCancelled() {
+    return getResult().equalsIgnoreCase("Cancelled");
+  }
+
+  public boolean isCompleted() {
+   return !state.equalsIgnoreCase("Building") && !state.equalsIgnoreCase("Cancelled");
   }
 }
 

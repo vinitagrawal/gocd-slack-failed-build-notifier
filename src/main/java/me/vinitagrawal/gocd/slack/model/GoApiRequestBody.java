@@ -43,13 +43,11 @@ public class GoApiRequestBody {
     }
 
     public boolean hasStageFailed() {
-      String result = stage.getResult();
-      return result.equalsIgnoreCase("Failed");
+      return stage.isFailed();
     }
 
     public boolean isStageCompleted() {
-      String state = stage.getState();
-      return !state.equalsIgnoreCase("Building");
+      return stage.isCompleted();
     }
 
     public Stage getStage() {
