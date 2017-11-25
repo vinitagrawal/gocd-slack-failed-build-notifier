@@ -57,6 +57,10 @@ public class GoApiRequestBody {
     public String getPassedStage() {
       return String.format("%s : %s", getName(), getStage().getName());
     }
+
+    public boolean isRerun() {
+      return stage.isRerun();
+    }
   }
 
 }

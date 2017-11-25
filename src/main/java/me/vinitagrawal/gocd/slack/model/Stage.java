@@ -4,6 +4,10 @@ import com.google.gson.annotations.SerializedName;
 
 public class Stage {
 
+  private static final String STAGE_FAILED = "Failed";
+  private static final String STAGE_CANCELLED = "Cancelled";
+  private static final String STAGE_BUILDING = "Building";
+
   @SerializedName("name")
   private String name;
 
@@ -29,15 +33,19 @@ public class Stage {
   }
 
   public boolean isFailed() {
-    return getResult().equalsIgnoreCase("Failed");
+    return getResult().equalsIgnoreCase(STAGE_FAILED);
   }
 
   public boolean isCancelled() {
-    return getResult().equalsIgnoreCase("Cancelled");
+    return getResult().equalsIgnoreCase(STAGE_CANCELLED);
   }
 
   public boolean isCompleted() {
-   return !state.equalsIgnoreCase("Building") && !state.equalsIgnoreCase("Cancelled");
+   return !state.equalsIgnoreCase(STAGE_BUILDING) && !state.equalsIgnoreCase(STAGE_CANCELLED);
+  }
+
+  public boolean isRerun() {
+    return counter > 1;
   }
 }
 

@@ -163,18 +163,18 @@ public class GoNotificationPlugin implements GoPlugin {
 
   private boolean toBeNotified(GoApiRequestBody.Pipeline pipeline, PluginSettings pluginSettings) {
     List<String> pipelineNameList = pluginSettings.getPipelineNames();
-    if (pipelineNameList.isEmpty()) {
-      return pipeline.isStageCompleted();
-    }
 
-    if (pipelineNameList.contains(pipeline.getName()) && pipeline.isStageCompleted()) {
-      if (pluginSettings.isStateChangeCheckEnabled())
-        return hasPipelineStateChanged(pipeline);
+    if ((pipelineNameList.isEmpty() || pipelineNameList.contains(pipeline.getName())) && pipeline.isStageCompleted()) {
+      if (pluginSettings.isStateChangeCheckEnabled()) {
+        if (pipeline.isRerun())
+          return !pipeline.hasStageFailed();
+        else
+          return hasPipelineStateChanged(pipeline);
+      }
 
       if (pipeline.hasStageFailed())
         return true;
     }
-
     return false;
   }
 
