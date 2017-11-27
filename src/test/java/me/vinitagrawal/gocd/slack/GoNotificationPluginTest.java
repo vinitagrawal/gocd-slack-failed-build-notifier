@@ -217,6 +217,18 @@ public class GoNotificationPluginTest {
     return apiClient;
   }
 
+  @Test
+  public void shouldNotNotifyWhenStageCancelled() throws Exception {
+    setupPluginSettings();
+    APIClient apiClient = PowerMockito.mock(APIClient.class);
+    SlackNotifier slackNotifier = getSlackNotifier();
+
+    handlePluginRequest(REQUEST_STAGE_STATUS, "go_api_request_body_stage_cancelled.json");
+
+    verify(apiClient, times(0)).getPipelineInstance(ArgumentMatchers.anyString(), ArgumentMatchers.anyInt());
+    verify(slackNotifier, times(0)).postMessage(ArgumentMatchers.any(Message.class));
+  }
+
   private GoApiResponse getGoApiResponseForPlugin() {
     return new GoApiResponse() {
       @Override
