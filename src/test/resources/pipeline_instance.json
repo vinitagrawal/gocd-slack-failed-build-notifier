@@ -31,11 +31,11 @@
   "comment": null,
   "stages": [
     {
-      "name": "stage1",
+      "name": "spec",
       "approved_by": "changes",
       "jobs": [
         {
-          "name": "jsunit",
+          "name": "spec",
           "result": "Passed",
           "state": "Completed",
           "id": 1,

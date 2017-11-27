@@ -58,10 +58,10 @@ public class GoNotificationPluginTest {
     return plugin.handle(request);
   }
 
-  private void setupPluginSettings(boolean changeState) {
+  private void setupPluginSettings() {
     GoApplicationAccessor accessor = mock(GoApplicationAccessor.class);
     when(accessor.submit(ArgumentMatchers.any(GoApiRequest.class)))
-      .thenReturn(getGoApiResponseForPlugin(changeState));
+      .thenReturn(getGoApiResponseForPlugin());
 
     plugin.initializeGoApplicationAccessor(accessor);
   }
@@ -129,7 +129,7 @@ public class GoNotificationPluginTest {
 
   @Test
   public void shouldGetPluginSettings() throws Exception {
-    setupPluginSettings(false);
+    setupPluginSettings();
 
     PluginSettings pluginSettings = plugin.getPluginSettings();
     assertThat(pluginSettings.getServerBaseUrl(), equalTo("http://localhost:8153"));
@@ -139,7 +139,7 @@ public class GoNotificationPluginTest {
   public void shouldCreateMessageFromMaterialRevision() throws Exception {
     String revisionJson = FileUtilities.readFrom("material_revision.json");
     MaterialRevision materialRevision = new Gson().fromJson(revisionJson, MaterialRevision.class);
-    setupPluginSettings(false);
+    setupPluginSettings();
     plugin.setPipelinePath("Droid/12/spec/1");
     Message message = plugin.createFailedMessage(plugin.getPluginSettings(), Arrays.asList(materialRevision));
 
@@ -157,27 +157,43 @@ public class GoNotificationPluginTest {
 
   @Test
   public void shouldHandleStageStatusAndReturnSuccess() throws Exception {
-    setupPluginSettings(false);
+    setupPluginSettings();
     APIClient apiClient = setupAPIClient();
     SlackNotifier slackNotifier = getSlackNotifier();
 
     GoPluginApiResponse apiResponse = handlePluginRequest(REQUEST_STAGE_STATUS, "go_api_request_body.json");
 
-    verify(apiClient, times(2)).getPipelineInstance(ArgumentMatchers.anyString(), ArgumentMatchers.anyInt());
+    verify(apiClient, times(3)).getPipelineInstance(ArgumentMatchers.anyString(), ArgumentMatchers.anyInt());
     verify(slackNotifier, times(1)).postMessage(ArgumentMatchers.any(Message.class));
     assertThat(apiResponse, is(notNullValue()));
     assertThat(apiResponse.responseBody(), equalTo("{\"status\":\"success\"}"));
   }
 
+  private APIClient setupAPIClient() throws Exception {
+    APIClient apiClient = PowerMockito.mock(APIClient.class);
+    String pipeline1 = FileUtilities.readFrom("pipeline_instance_changed_false.json");
+    PipelineInstance pipelineInstance1 = new Gson().fromJson(pipeline1, PipelineInstance.class);
+    String pipeline2 = FileUtilities.readFrom("pipeline_instance.json");
+    PipelineInstance pipelineInstance2 = new Gson().fromJson(pipeline2, PipelineInstance.class);
+
+    PowerMockito.whenNew(APIClient.class).withAnyArguments().thenReturn(apiClient);
+    when(apiClient.getPipelineInstance(ArgumentMatchers.anyString(), ArgumentMatchers.anyInt()))
+      .thenReturn(pipelineInstance1)
+      .thenReturn(pipelineInstance2)
+      .thenReturn(pipelineInstance2);
+
+    return apiClient;
+  }
+
   @Test
-  public void shouldHandleStateChangeAndReturnSuccess() throws Exception {
-    setupPluginSettings(true);
-    APIClient apiClient = setupApiClientForStateChange();
+  public void shouldHandleRerunStageAndReturnSuccess() throws Exception {
+    setupPluginSettings();
+    APIClient apiClient = PowerMockito.mock(APIClient.class);
     SlackNotifier slackNotifier = getSlackNotifier();
 
     GoPluginApiResponse apiResponse = handlePluginRequest(REQUEST_STAGE_STATUS, "go_api_request_body_result_passed.json");
 
-    verify(apiClient, times(1)).getPipelineInstance(ArgumentMatchers.anyString(), ArgumentMatchers.anyInt());
+    verify(apiClient, times(0)).getPipelineInstance(ArgumentMatchers.anyString(), ArgumentMatchers.anyInt());
     verify(slackNotifier, times(1)).postMessage(ArgumentMatchers.any(Message.class));
     assertThat(apiResponse, is(notNullValue()));
     assertThat(apiResponse.responseBody(), equalTo("{\"status\":\"success\"}"));
@@ -201,22 +217,7 @@ public class GoNotificationPluginTest {
     return apiClient;
   }
 
-  private APIClient setupAPIClient() throws Exception {
-    APIClient apiClient = PowerMockito.mock(APIClient.class);
-    String pipeline1 = FileUtilities.readFrom("pipeline_instance_changed_false.json");
-    PipelineInstance pipelineInstance1 = new Gson().fromJson(pipeline1, PipelineInstance.class);
-    String pipeline2 = FileUtilities.readFrom("pipeline_instance.json");
-    PipelineInstance pipelineInstance2 = new Gson().fromJson(pipeline2, PipelineInstance.class);
-
-    PowerMockito.whenNew(APIClient.class).withAnyArguments().thenReturn(apiClient);
-    when(apiClient.getPipelineInstance(ArgumentMatchers.anyString(), ArgumentMatchers.anyInt()))
-      .thenReturn(pipelineInstance1)
-      .thenReturn(pipelineInstance2);
-
-    return apiClient;
-  }
-
-  private GoApiResponse getGoApiResponseForPlugin(final boolean changeState) {
+  private GoApiResponse getGoApiResponseForPlugin() {
     return new GoApiResponse() {
       @Override
       public int responseCode() {
@@ -232,9 +233,6 @@ public class GoNotificationPluginTest {
       public String responseBody() {
         String response = "\"server_base_url\":\"http://localhost:8153\",\"server_api_password\":\"password\"," +
           "\"server_api_username\":\"username\",\"pipeline_names\":\"Droid,mocks\",\"is_minimalistic\":\"off\"";
-        if (changeState)
-          return "{" + response + ",\"enable_state_change\":\"on\"}";
-
         return "{" + response + "}";
       }
     };

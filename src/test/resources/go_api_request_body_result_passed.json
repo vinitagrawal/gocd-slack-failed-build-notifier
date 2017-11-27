@@ -42,7 +42,7 @@
     ],
     "stage": {
       "name": "spec",
-      "counter": "1",
+      "counter": "2",
       "approval-type": "success",
       "approved-by": "changes",
       "state": "Passed",

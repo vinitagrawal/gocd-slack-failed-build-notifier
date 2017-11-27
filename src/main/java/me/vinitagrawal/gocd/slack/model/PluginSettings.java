@@ -24,8 +24,6 @@ public class PluginSettings {
   private String pipelineNames;
   @SerializedName("is_minimalistic")
   private String isMinimalisticCheckEnabled;
-  @SerializedName("enable_state_change")
-  private String isStateChangeCheckEnabled;
 
   public String getServerBaseUrl() {
     return serverBaseUrl;
@@ -65,10 +63,4 @@ public class PluginSettings {
     return false;
   }
 
-  public boolean isStateChangeCheckEnabled() {
-    if (isStateChangeCheckEnabled != null)
-      return isStateChangeCheckEnabled.equalsIgnoreCase("on");
-
-    return false;
-  }
 }
