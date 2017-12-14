@@ -84,8 +84,7 @@ public class PipelineInstance {
     for (Stage stage : stages) {
       try {
         if (stage.getName().equals(currentStage.getName()))
-          if ((stage.isCancelled() && currentStage.isFailed()) ||
-            (!stage.getResult().equalsIgnoreCase(currentStage.getResult())))
+          if (!stage.getResult().equalsIgnoreCase(currentStage.getResult()))
             return true;
       } catch (NullPointerException e) {
         if (currentStage.isFailed())
