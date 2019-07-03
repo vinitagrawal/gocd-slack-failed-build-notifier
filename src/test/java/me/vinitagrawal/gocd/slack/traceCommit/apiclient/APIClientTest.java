@@ -1,7 +1,7 @@
-package me.vinitagrawal.gocd.slack.apiclient;
+package me.vinitagrawal.gocd.slack.traceCommit.apiclient;
 
-import me.vinitagrawal.gocd.slack.model.MaterialRevision;
-import me.vinitagrawal.gocd.slack.model.PipelineInstance;
+import me.vinitagrawal.gocd.slack.traceCommit.model.MaterialRevision;
+import me.vinitagrawal.gocd.slack.traceCommit.model.PipelineInstance;
 import me.vinitagrawal.gocd.slack.testUtils.FileUtilities;
 import org.apache.commons.io.IOUtils;
 import org.junit.Before;

@@ -1,4 +1,4 @@
-package me.vinitagrawal.gocd.slack.model;
+package me.vinitagrawal.gocd.slack.traceCommit.model;
 
 import com.google.gson.Gson;
 import me.vinitagrawal.gocd.slack.testUtils.FileUtilities;

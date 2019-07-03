@@ -1,4 +1,4 @@
-package me.vinitagrawal.gocd.slack.utils;
+package me.vinitagrawal.gocd.slack.traceCommit.utils;
 
 public class TextUtils {
 

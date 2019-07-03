@@ -12,8 +12,10 @@ import com.thoughtworks.go.plugin.api.request.DefaultGoApiRequest;
 import com.thoughtworks.go.plugin.api.request.GoPluginApiRequest;
 import com.thoughtworks.go.plugin.api.response.GoApiResponse;
 import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
-import me.vinitagrawal.gocd.slack.apiclient.APIClient;
-import me.vinitagrawal.gocd.slack.model.*;
+import me.vinitagrawal.gocd.slack.model.PluginSettings;
+import me.vinitagrawal.gocd.slack.traceCommit.TraceCommit;
+import me.vinitagrawal.gocd.slack.traceCommit.apiclient.APIClient;
+import me.vinitagrawal.gocd.slack.traceCommit.model.*;
 import me.vinitagrawal.gocd.slack.notifier.Message;
 import me.vinitagrawal.gocd.slack.notifier.SlackNotifier;
 import org.apache.commons.io.IOUtils;
@@ -22,7 +24,7 @@ import java.io.IOException;
 import java.util.*;
 
 import static java.util.Arrays.asList;
-import static me.vinitagrawal.gocd.slack.utils.TextUtils.isNullOrEmpty;
+import static me.vinitagrawal.gocd.slack.traceCommit.utils.TextUtils.isNullOrEmpty;
 
 @Extension
 public class GoNotificationPlugin implements GoPlugin {
@@ -46,7 +48,7 @@ public class GoNotificationPlugin implements GoPlugin {
   private GoApplicationAccessor accessor;
   private String pipelinePath;
   private APIClient apiClient;
-  private List<MaterialRevision> materialRevisions;
+  private TraceCommit traceCommit;
 
   @Override
   public void initializeGoApplicationAccessor(GoApplicationAccessor goApplicationAccessor) {
@@ -129,6 +131,7 @@ public class GoNotificationPlugin implements GoPlugin {
     GoApiRequestBody goApiRequestBody = gson.fromJson(goPluginApiRequest.requestBody(), GoApiRequestBody.class);
     Map<String, Object> response = new HashMap<String, Object>();
     PluginSettings pluginSettings = getPluginSettings();
+    traceCommit = new TraceCommit();
 
     try {
       response.put("status", "success");
@@ -154,8 +157,11 @@ public class GoNotificationPlugin implements GoPlugin {
 
   private void postFailedMessage(PluginSettings pluginSettings, GoApiRequestBody.Pipeline pipeline) {
     setPipelinePath(pipeline.getPath());
-    materialRevisions = new ArrayList<>();
-    determineFailingPipeline(pipeline.getName(), pipeline.getCounter(), pipeline.getStage());
+    List<MaterialRevision> materialRevisions = traceCommit.determineFailureMaterial(
+      pipeline.getName(),
+      pipeline.getCounter(),
+      pipeline.getStage()
+    );
     Message message = createFailedMessage(pluginSettings, materialRevisions);
     postMessageToSlack(pluginSettings, message);
   }
@@ -179,47 +185,11 @@ public class GoNotificationPlugin implements GoPlugin {
   }
 
   private void setAPIClient(PluginSettings pluginSettings) {
-    apiClient = new APIClient(
+    apiClient = traceCommit.setAPIClient(
       pluginSettings.getServerBaseUrl(),
       pluginSettings.getServerApiUsername(),
       pluginSettings.getServerApiPassword()
     );
-  }
-
-  private void determineFailingPipeline(String pipelineName, int pipelineCounter, Stage stage) {
-    PipelineInstance pipelineInstance = apiClient.getPipelineInstance(pipelineName, pipelineCounter-1);
-    if (pipelineInstance.hasStageFailed(stage))
-      determineFailingPipeline(pipelineName, pipelineCounter-1, stage);
-    else
-      determineFailingCommit(pipelineName, pipelineCounter);
-  }
-
-  private void determineFailingCommit(String pipelineName, int pipelineCounter) {
-    PipelineInstance pipelineInstance = apiClient.getPipelineInstance(pipelineName, pipelineCounter);
-    List<MaterialRevision> materialRevisionList = pipelineInstance.getBuildCauseRevision();
-
-    for(MaterialRevision materialRevision : materialRevisionList) {
-      if (materialRevision.isBuildCauseTypePipeline()) {
-        String revision = materialRevision.getPipelineRevision();
-
-        String[] pipelineRevision = revision.split("/");
-        pipelineName = pipelineRevision[0];
-        pipelineCounter = Integer.parseInt(pipelineRevision[1]);
-
-        determineFailingCommit(pipelineName, pipelineCounter);
-      } else if (materialRevision.isBuildCauseTypeGit()) {
-        if(!isMaterialPresent(materialRevision.getMaterialFingerprint()))
-          materialRevisions.add(materialRevision);
-      }
-    }
-  }
-
-  private boolean isMaterialPresent(String fingerprint) {
-    for(MaterialRevision materialRevision : materialRevisions) {
-      if(materialRevision.getMaterialFingerprint().equals(fingerprint))
-        return true;
-    }
-    return false;
   }
 
   private void postMessageToSlack(PluginSettings pluginSettings, Message message) {
@@ -285,7 +255,8 @@ public class GoNotificationPlugin implements GoPlugin {
     return gson.fromJson(response.responseBody(), PluginSettings.class);
   }
 
-  private Map<String, Object> createField(String displayName, String defaultValue, boolean isRequired, boolean isSecure, String displayOrder) {
+  private Map<String, Object> createField(String displayName, String defaultValue, boolean isRequired,
+                                          boolean isSecure, String displayOrder) {
     Map<String, Object> fieldProperties = new HashMap<String, Object>();
     fieldProperties.put("display-name", displayName);
     fieldProperties.put("default-value", defaultValue);

@@ -1,8 +1,8 @@
-package me.vinitagrawal.gocd.slack.apiclient;
+package me.vinitagrawal.gocd.slack.traceCommit.apiclient;
 
 import com.google.gson.Gson;
 import com.thoughtworks.go.plugin.api.logging.Logger;
-import me.vinitagrawal.gocd.slack.model.PipelineInstance;
+import me.vinitagrawal.gocd.slack.traceCommit.model.PipelineInstance;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
@@ -10,7 +10,7 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
 
-import static me.vinitagrawal.gocd.slack.utils.TextUtils.isNullOrEmpty;
+import static me.vinitagrawal.gocd.slack.traceCommit.utils.TextUtils.isNullOrEmpty;
 
 public class APIClient {
 

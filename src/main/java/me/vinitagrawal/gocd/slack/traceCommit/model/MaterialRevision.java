@@ -1,4 +1,4 @@
-package me.vinitagrawal.gocd.slack.model;
+package me.vinitagrawal.gocd.slack.traceCommit.model;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -7,7 +7,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import static me.vinitagrawal.gocd.slack.utils.TextUtils.isNullOrEmpty;
+import static me.vinitagrawal.gocd.slack.traceCommit.utils.TextUtils.isNullOrEmpty;
 
 public class MaterialRevision {
 
